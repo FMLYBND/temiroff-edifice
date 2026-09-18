@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Вход — Temiroff Edifice</title>
+<link rel="icon" href="favicon.svg"/>
+<link rel="stylesheet" href="assets/site.css"/>
+</head>
+<body data-page="login" data-root="" class="login-body">
+<div class="splash" id="splash">
+  <img src="favicon.svg" alt="Temiroff"/>
+  <p>Temiroff Edifice</p>
+</div>
+<main class="login-box">
+  <img class="login-logo" src="favicon.svg" alt="Temiroff"/>
+  <p class="subtle">Навои · смета</p>
+  <h1>Edifice</h1>
+  <p class="muted">Должность и пароль. Других входов нет.</p>
+  <form id="login-form" class="panel login-form" autocomplete="on">
+    <label>
+      <span>Кто входит</span>
+      <select id="login" name="login" required></select>
+    </label>
+    <label>
+      <span>Пароль</span>
+      <input id="password" name="password" type="password" required autocomplete="current-password"/>
+    </label>
+    <label class="check">
+      <input id="remember" type="checkbox"/>
+      <span>Запомнить на 30 дней</span>
+    </label>
+    <p class="err hidden" id="err"></p>
+    <button type="submit" class="btn primary" id="go">Войти</button>
+    <p class="subtle" style="margin:0">Смету можно смотреть без входа. Вход — только чтобы править и публиковать.</p>
+    <p class="subtle" style="margin:0"><a href="index.html">Открыть смету без пароля</a></p>
+  </form>
+</main>
+<script src="assets/auth.js"></script>
+<script>
+(function () {
+  var splash = document.getElementById("splash");
+  setTimeout(function () { if (splash) splash.classList.add("off"); }, 700);
+  setTimeout(function () { if (splash) splash.remove(); }, 1400);
+  var Auth = window.EdificeAuth;
+  if (!Auth) return;
+  var s = Auth.current();
+  if (s && !s.open) { location.replace("index.html"); return; }
+  var sel = document.getElementById("login");
+  Auth.users.forEach(function (u) {
+    var o = document.createElement("option");
+    o.value = u.login;
+    o.textContent = u.name;
+    sel.appendChild(o);
+  });
+  var form = document.getElementById("login-form");
+  var err = document.getElementById("err");
+  var btn = document.getElementById("go");
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    err.classList.add("hidden");
+    btn.disabled = true;
+    Auth.login(
+      document.getElementById("login").value,
+      document.getElementById("password").value,
+      document.getElementById("remember").checked
+    ).then(function (res) {
+      btn.disabled = false;
+      if (!res.ok) {
+        err.textContent = res.error || "Неверный пароль";
+        err.classList.remove("hidden");
+        return;
+      }
+      var next = "index.html";
+      var q = location.search.replace(/^\?/, "").split("&");
+      q.forEach(function (p) {
+        var i = p.indexOf("=");
+        if (i > 0 && decodeURIComponent(p.slice(0, i)) === "next") {
+          next = decodeURIComponent(p.slice(i + 1)) || next;
+        }
+      });
+      if (next.indexOf("://") !== -1 || next.charAt(0) === "/") next = "index.html";
+      location.replace(next);
+    });
+  });
+})();
+</script>
+</body>
+</html>
