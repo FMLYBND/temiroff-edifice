@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Просмотр — Temiroff Edifice</title>
+<link rel="icon" href="favicon.svg"/>
+<link rel="stylesheet" href="assets/site.css"/>
+</head>
+<body data-page="login" data-root="" class="login-body">
+<main class="login-box">
+  <img class="login-logo" src="favicon.svg" alt="Temiroff"/>
+  <p class="subtle">Навои · смета</p>
+  <h1>Просмотр</h1>
+  <p class="muted" id="msg">Открываю смету для руководства…</p>
+</main>
+<script src="assets/auth.js"></script>
+<script>
+(function () {
+  var AUTH = window.EdificeAuth;
+  var q = new URLSearchParams(location.search);
+  var t = q.get("t") || "";
+  var r = AUTH.enterDirector(t);
+  var msg = document.getElementById("msg");
+  if (r.ok) {
+    location.replace("index.html");
+    return;
+  }
+  msg.textContent = r.error || "Ссылка недействительна";
+  msg.className = "err";
+})();
+</script>
+</body>
+</html>
