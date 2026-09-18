@@ -1,5 +1,7 @@
 # Temiroff Edifice
 
-Открытая смета БЦ Навои: https://fmlybnd.github.io/temiroff-edifice/
+Смета реконструкции бизнес-центра, Навои.
 
-Просмотр без пароля.
+Открытый просмотр: https://fmlybnd.github.io/temiroff-edifice/
+
+Пароль нужен только чтобы править (ген. директор).
