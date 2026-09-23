@@ -558,7 +558,16 @@
     html += '<div class="panel"><div class="lbl">Уже оплачено</div><div class="num exact">' + money(ex.paid, true) + '</div><div class="sub">' + ex.nPaid + " заявки 1С · " + money(ex.paid) + '</div></div>';
     html += "</div>";
     html += '<div class="need-list">';
-    ex.items.filter(function (p) { return p.status === "sign"; }).forEach(function (p) {
+    var first = ex.items.filter(function (p) { return p.priority && p.status !== "paid"; });
+    if (first.length) {
+      html += '<div class="pay-first">В приоритет — оплатить первыми</div>';
+      first.forEach(function (p) {
+        html += '<div class="need prio-row"><strong>' + esc(p.name) + "</strong> " + expStatus(p) + prioTag(p);
+        html += '<div class="num est">' + som(p.sum) + (p.usd ? " · $" + p.usd.toLocaleString("ru-RU") : "") + "</div>";
+        html += '<div class="subtle">' + esc(p.num) + (p.doc ? " · " + esc(p.doc) : "") + " · провести раньше остальных</div></div>";
+      });
+    }
+    ex.items.filter(function (p) { return p.status === "sign" && !p.priority; }).forEach(function (p) {
       html += '<div class="need"><strong>' + esc(p.name) + "</strong> " + expStatus(p) + prioTag(p);
       html += '<div class="num est">' + som(p.sum) + (p.usd ? " · $" + p.usd.toLocaleString("ru-RU") : "") + "</div>";
       html += '<div class="subtle">' + esc(p.num) + " · ещё не в долге</div></div>";
@@ -569,6 +578,7 @@
       html += '<div class="subtle">' + esc(p.num) + " · " + esc(p.registry) + "</div></div>";
     });
     wait.forEach(function (c) {
+      if (c.priority) return;
       html += '<div class="need"><a href="' + root + c.href + '">открыть</a><strong>' + esc(c.name) + "</strong> ";
       html += pill(PAY, c.pay, "pay") + prioTag(c);
       html += '<div class="muted" style="margin-top:6px">';
