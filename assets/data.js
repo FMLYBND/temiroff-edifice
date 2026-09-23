@@ -11402,11 +11402,11 @@ window.EDIFICE_DATA = {
    "name": "Фибробетон фасада",
    "sum": 190710000,
    "stage": "waiting",
-   "pay": "sign",
+   "pay": "advance",
    "exact": true,
+   "advanceSum": 58500000,
    "href": "works.html#fibro",
-   "note": "ПРИОРИТЕТ: предоплата 5 000 $ (58,5 млн по курсу 11 700) на подписи — провести первой (СЗ-2026-0282)",
-   "priority": true
+   "note": "аванс 5 000 $ (58,5 млн) оплачен · остаток по факту работ"
   },
   {
    "id": "c-dem",
@@ -11469,16 +11469,6 @@ window.EDIFICE_DATA = {
    "exact": false,
    "href": "floors/fitness.html",
    "note": "93 261,95 USD, КП до 04.10.2026"
-  },
-  {
-   "id": "c-dl",
-   "name": "Салон · освещение + добор",
-   "sum": 82072900,
-   "stage": "declared",
-   "pay": "approve",
-   "exact": false,
-   "href": "floors/salon.html",
-   "note": "КП 75,3 млн + добор 6,8 млн, предоплата 100%"
   }
  ]
 };
