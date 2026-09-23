@@ -3387,8 +3387,8 @@ window.EDIFICE_STATUS = {
     },
     {
       "id": "L4-PER-004",
-      "stage": "counting",
-      "pay": "none",
+      "stage": "waiting",
+      "pay": "advance",
       "paidAmount": 0,
       "doc": "",
       "comment": "",
@@ -3883,8 +3883,8 @@ window.EDIFICE_STATUS = {
     {
       "id": "lift-cable-01",
       "stage": "waiting",
-      "pay": "debt",
-      "paidAmount": 0,
+      "pay": "paid",
+      "paidAmount": 5475000,
       "doc": "",
       "comment": "",
       "updated": "2026-09-17"
@@ -4206,8 +4206,8 @@ window.EDIFICE_STATUS = {
     },
     {
       "id": "facade-imzo-01",
-      "stage": "counting",
-      "pay": "none",
+      "stage": "waiting",
+      "pay": "advance",
       "paidAmount": 0,
       "doc": "",
       "comment": "",
