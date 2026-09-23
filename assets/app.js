@@ -221,9 +221,29 @@
   function moneyCell(it) {
     if (!AUTH.can("seeMoney")) return "—";
     if (it.noPrice || it.sum == null) return '<span class="num est">считается</span>';
-    var cls = it.priceKind === "exact" ? "exact" : "est";
-    var tag = it.priceKind === "exact" ? "из сметы / КП" : "оценка ММЗ · примерная";
-    return '<span class="num ' + cls + '" title="' + tag + '">' + som(it.sum) + "</span>";
+    var st = statusOf(it.id);
+    var pay = it.funding === "customer" ? "customer" : (st.pay || "none");
+    return '<span class="num ' + sumCls(pay, it.priceKind === "exact") + '" title="' + sumTitle(pay, it.priceKind) + '">' + som(it.sum) + "</span>";
+  }
+
+  function sumCls(pay, exact) {
+    if (pay === "customer") return "cust";
+    if (pay === "paid" || pay === "bought") return "paid";
+    if (pay === "debt") return "debt";
+    return exact ? "exact" : "est";
+  }
+  function sumTitle(pay, priceKind) {
+    if (pay === "customer") return "заявлено заказчиком";
+    if (pay === "paid") return "оплачено";
+    if (pay === "advance") return "аванс оплачен";
+    if (pay === "bought") return "закуплено";
+    if (pay === "debt") return "в долгу";
+    return priceKind === "exact" ? "точная цифра" : "примерная оценка";
+  }
+  function expSumCls(status) {
+    if (status === "paid") return "paid";
+    if (status === "debt") return "debt";
+    return "est";
   }
 
   function emptyStatus(id) {
@@ -555,7 +575,7 @@
     html += '<div class="panel"><div class="lbl">В реестре — оплатить</div><div class="num debt">' + money(ex.debt, true) + '</div><div class="sub">' + ex.nDebt + " заявки · " + money(ex.debt) + "</div></div>";
     html += '<div class="panel"><div class="lbl">На подписи — провести</div><div class="num est">' + money(ex.sign, true) + '</div><div class="sub">' + ex.nSign + " заявки · " + money(ex.sign) + "</div></div>";
     html += '<div class="panel"><div class="lbl">Авансы (ждут денег)</div><div class="num est">' + money(adv, true) + '</div><div class="sub">' + esc(advNames.join(", ") || "нет ожидающих") + '</div></div>';
-    html += '<div class="panel"><div class="lbl">Уже оплачено</div><div class="num exact">' + money(ex.paid, true) + '</div><div class="sub">' + ex.nPaid + " заявки 1С · " + money(ex.paid) + '</div></div>';
+    html += '<div class="panel"><div class="lbl">Уже оплачено</div><div class="num paid">' + money(ex.paid, true) + '</div><div class="sub">' + ex.nPaid + " заявки 1С · " + money(ex.paid) + '</div></div>';
     html += "</div>";
     html += '<div class="need-list">';
     var first = ex.items.filter(function (p) { return p.priority && p.status !== "paid"; });
@@ -563,7 +583,7 @@
       html += '<div class="pay-first">В приоритет — оплатить первыми</div>';
       first.forEach(function (p) {
         html += '<div class="need prio-row"><strong>' + esc(p.name) + "</strong> " + expStatus(p) + prioTag(p);
-        html += '<div class="num est">' + som(p.sum) + (p.usd ? " · $" + p.usd.toLocaleString("ru-RU") : "") + "</div>";
+        html += '<div class="num ' + expSumCls(p.status) + '">' + som(p.sum) + (p.usd ? " · $" + p.usd.toLocaleString("ru-RU") : "") + "</div>";
         html += '<div class="subtle">' + esc(p.num) + (p.doc ? " · " + esc(p.doc) : "") + " · провести раньше остальных</div></div>";
       });
     }
@@ -670,15 +690,16 @@
     html += '<div class="kpi kpi-4">';
     html += '<div class="panel"><div class="lbl">Этажи · смета БЦ</div><div class="num">' + money(meta.floorsSum, true) + '</div><div class="sub">' + money(meta.floorsSum) + " сум</div></div>";
     html += '<div class="panel"><div class="lbl">Точные (смета / КП)</div><div class="num exact">' + money(meta.exactSum, true) + '</div><div class="sub">' + money(meta.exactSum) + "</div></div>";
-    html += '<div class="panel"><div class="lbl">Примерные (оценка ММЗ)</div><div class="num est">' + money(meta.estSum, true) + '</div><div class="sub">без закупок заказчика</div></div>';
+    html += '<div class="panel"><div class="lbl">Примерные</div><div class="num est">' + money(meta.estSum, true) + '</div><div class="sub">без закупок заказчика</div></div>';
     html += '<div class="panel"><div class="lbl">СМР здания</div><div class="num exact">' + money(meta.cmr, true) + '</div><div class="sub">' + money(meta.cmr) + " сум</div></div>";
     html += "</div>";
     html += '<div class="kpi kpi-4">';
-    html += '<div class="panel"><div class="lbl">Оплачено по заявкам</div><div class="num exact">' + money(ex.paid, true) + '</div><div class="sub">' + ex.nPaid + " заявки · " + money(ex.paid) + "</div></div>";
+    html += '<div class="panel"><div class="lbl">Оплачено по заявкам</div><div class="num paid">' + money(ex.paid, true) + '</div><div class="sub">' + ex.nPaid + " заявки · " + money(ex.paid) + "</div></div>";
     html += '<div class="panel"><div class="lbl">В долгу</div><div class="num debt">' + money(ex.debt, true) + '</div><div class="sub">' + ex.nDebt + " в реестре · " + money(ex.debt) + "</div></div>";
     html += '<div class="panel"><div class="lbl">На подписи</div><div class="num est">' + money(ex.sign, true) + '</div><div class="sub">' + ex.nSign + " заявки · ещё не в долге</div></div>";
-    html += '<div class="panel"><div class="lbl">Лифт ASERA · КП</div><div class="num exact">' + money(meta.liftSum, true) + '</div><div class="sub">оплачен · остановки 1–4</div></div>';
+    html += '<div class="panel"><div class="lbl">Лифт ASERA · КП</div><div class="num paid">' + money(meta.liftSum, true) + '</div><div class="sub">оплачен · остановки 1–4</div></div>';
     html += "</div>";
+    html += '<p class="legend"><span class="num exact">■ точная</span><span class="num est">■ примерная</span><span class="num paid">■ оплачено</span><span class="num debt">■ долг</span><span class="num cust">■ заказчик, салон</span></p>';
     if (AUTH.can("seeMoney")) html += '<p class="exclude">' + esc(meta.note) + "</p>";
     if (USER && USER.director) {
       html += '<p class="exclude">Временный просмотр для руководства · до ' + esc(meta.directorUntil || AUTH.directorUntil) + "</p>";
@@ -692,7 +713,7 @@
       html += "<strong>" + esc(c.name) + "</strong> ";
       html += pill(STAGE, c.stage) + " " + pill(PAY, c.pay, "pay") + prioTag(c);
       if (AUTH.can("seeMoney") && c.sum != null) {
-        html += '<div class="muted" style="margin-top:6px"><span class="num ' + (c.exact ? "exact" : "est") + '">' + som(c.sum) + "</span>";
+        html += '<div class="muted" style="margin-top:6px"><span class="num ' + sumCls(c.pay === "advance" ? "none" : c.pay, !!c.exact) + '">' + som(c.sum) + "</span>";
         if (c.advanceSum) html += " · аванс " + som(c.advanceSum);
         html += " · " + esc(c.note) + "</div>";
       } else {
@@ -710,7 +731,7 @@
         html += '<div class="need">';
         html += "<strong>" + esc(p.num) + "</strong> " + expStatus(p) + prioTag(p);
         html += '<div class="muted" style="margin-top:6px">' + esc(p.name) + "</div>";
-        html += '<div class="num ' + (p.status === "paid" ? "exact" : p.status === "debt" ? "debt" : "est") + '">' + som(p.sum);
+        html += '<div class="num ' + expSumCls(p.status) + '">' + som(p.sum);
         if (p.usd) html += " · $" + p.usd.toLocaleString("ru-RU");
         html += "</div>";
         html += '<div class="subtle">' + esc(p.date) + " · " + esc(p.entity) + " · " + esc(p.registry) + "</div>";
@@ -770,7 +791,7 @@
     html += '<div class="chips" id="sec-chips"></div>';
     html += '<div id="sec-body"></div>';
     html += issuesHtml(f.issues);
-    html += '<p class="legend"><span class="num exact">■ из сметы / КП</span><span class="num est">■ примерная оценка ММЗ</span><span class="qty-miss">■ нет количества</span></p>';
+    html += '<p class="legend"><span class="num exact">■ точная цифра</span><span class="num est">■ примерная оценка</span><span class="num paid">■ оплачено</span><span class="num debt">■ в долгу</span><span class="num cust">■ заявлено заказчиком</span><span class="qty-miss">■ нет количества</span></p>';
     el.innerHTML = html;
     lightboxBind(el);
 
@@ -886,8 +907,8 @@
     if (AUTH.can("seeMoney")) {
       html += '<div class="kpi">';
       html += '<div class="panel"><div class="lbl">Начислено</div><div class="num exact">' + money(WORKS.meta.accrued, true) + '</div><div class="sub">' + money(WORKS.meta.accrued) + " сум</div></div>";
-      html += '<div class="panel"><div class="lbl">Оплачено</div><div class="num exact">' + money(WORKS.meta.paid, true) + '</div><div class="sub">' + money(WORKS.meta.paid) + " сум</div></div>";
-      html += '<div class="panel"><div class="lbl">В долгах</div><div class="num est">' + money(WORKS.meta.queued, true) + '</div><div class="sub">' + money(WORKS.meta.queued) + " сум</div></div>";
+      html += '<div class="panel"><div class="lbl">Оплачено</div><div class="num paid">' + money(WORKS.meta.paid, true) + '</div><div class="sub">' + money(WORKS.meta.paid) + " сум</div></div>";
+      html += '<div class="panel"><div class="lbl">В долгах</div><div class="num debt">' + money(WORKS.meta.queued, true) + '</div><div class="sub">' + money(WORKS.meta.queued) + " сум</div></div>";
       html += "</div>";
     }
     html += '<div class="chips" id="wchips"></div><div id="wbody"></div>';
@@ -921,7 +942,7 @@
         src.forEach(function (p) {
           body += "<tr><td class='id' data-th='Заявка'>" + esc(p.num) + "</td>";
           body += "<td data-th='Назначение'>" + esc(p.name) + "</td>";
-          if (AUTH.can("seeMoney")) body += '<td class="num" data-th="Сумма">' + (p.usd ? money(p.sum) + " · $" + p.usd.toLocaleString("ru-RU") : money(p.sum)) + "</td>";
+          if (AUTH.can("seeMoney")) body += '<td class="num ' + expSumCls(p.status) + '" data-th="Сумма">' + (p.usd ? money(p.sum) + " · $" + p.usd.toLocaleString("ru-RU") : money(p.sum)) + "</td>";
           body += "<td data-th='Статус'>" + expStatus(p) + prioTag(p) + "</td></tr>";
         });
         body += "</tbody></table></div>";
@@ -936,9 +957,15 @@
           sec.items.forEach(function (it) {
             body += "<tr><td class='id' data-th='ID'>" + esc(it.id) + "</td>";
             body += "<td data-th='Позиция'>" + esc(it.name) + "</td>";
-            if (AUTH.can("seeMoney")) body += '<td class="num ' + (it.sum ? "exact" : "est") + '" data-th="Сумма">' + (it.noPrice || !it.sum ? "—" : money(it.sum)) + "</td>";
-            var pay = it.procurement === "paid" ? "paid" : it.procurement === "advance" ? "advance" : (it.procurement === "declared" ? "debt" : "none");
-            body += "<td data-th='Заявка'>" + pill(PAY, pay, "pay") + "</td></tr>";
+            if (AUTH.can("seeMoney")) {
+              var pay = it.procurement === "paid" ? "paid" : it.procurement === "advance" ? "advance" : (it.procurement === "declared" ? "debt" : "none");
+              var cls = it.procurement === "paid" ? "paid" : (it.sum ? "exact" : "est");
+              body += '<td class="num ' + cls + '" data-th="Сумма">' + (it.noPrice || !it.sum ? "—" : money(it.sum)) + "</td>";
+              body += "<td data-th='Заявка'>" + pill(PAY, pay, "pay") + "</td></tr>";
+            } else {
+              var pay2 = it.procurement === "paid" ? "paid" : it.procurement === "advance" ? "advance" : (it.procurement === "declared" ? "debt" : "none");
+              body += "<td data-th='Заявка'>" + pill(PAY, pay2, "pay") + "</td></tr>";
+            }
           });
           body += "</tbody></table></div>";
         }
@@ -1024,10 +1051,10 @@
 
   function renderExpenses(el) {
     var ex = expenseTotals();
-    var html = '<p class="subtle">Заявки 1С · QTSK / MMZ</p><h1>Расходы</h1>';
+    var html = '<p class="subtle">Заявки 1С</p><h1>Расходы</h1>';
     html += '<p class="muted">' + esc((EXPENSES && EXPENSES.note) || "") + "</p>";
     html += '<div class="kpi kpi-4">';
-    html += '<div class="panel"><div class="lbl">Оплачено</div><div class="num exact">' + money(ex.paid, true) + '</div><div class="sub">' + ex.nPaid + " · " + money(ex.paid) + "</div></div>";
+    html += '<div class="panel"><div class="lbl">Оплачено</div><div class="num paid">' + money(ex.paid, true) + '</div><div class="sub">' + ex.nPaid + " · " + money(ex.paid) + "</div></div>";
     html += '<div class="panel"><div class="lbl">В долгу</div><div class="num debt">' + money(ex.debt, true) + '</div><div class="sub">' + ex.nDebt + " в реестре</div></div>";
     html += '<div class="panel"><div class="lbl">На подписи</div><div class="num est">' + money(ex.sign, true) + '</div><div class="sub">' + ex.nSign + " · не в долге</div></div>";
     html += '<div class="panel"><div class="lbl">Всего заявок</div><div class="num">' + ex.items.length + '</div><div class="sub">срез ' + esc((EXPENSES && EXPENSES.updated) || "") + "</div></div>";
@@ -1060,7 +1087,7 @@
         if (p.who) body += " · " + esc(p.who);
         body += "</div>";
         if (AUTH.can("seeMoney")) {
-          body += '<div class="num ' + (p.status === "paid" ? "exact" : p.status === "debt" ? "debt" : "est") + '" style="margin-top:4px">' + som(p.sum);
+          body += '<div class="num ' + expSumCls(p.status) + '" style="margin-top:4px">' + som(p.sum);
           if (p.usd) body += " · $" + p.usd.toLocaleString("ru-RU") + " (курс " + (EXPENSES.rateUsd || "").toLocaleString("ru-RU") + ")";
           body += "</div>";
         }
