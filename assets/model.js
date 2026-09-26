@@ -524,11 +524,6 @@
       bx(x - 0.03 + dir * 0.04, 0, zc - hw, x + 0.03 + dir * 0.04, h - 0.1, zc + hw, mat.liftDoor, d, false);
       reg(d, 3, { mode: "grow", axis: "y", delay: 0.72 + i * 0.05, dur: 0.15 });
     });
-    // конфликт: порог 4-й остановки (+10.200) ниже пола террасы (+10.800) — красная ступень у двери А
-    const top = l.doors.filter(d => d.side === "A").reduce((a, d) => d.y > a.y ? d : a);
-    const step = bx(X1 + 0.08, top.y, LF.zc - hw, X1 + 0.9, LT + 0.02, LF.zc + hw, mat.conflict, scene, false);
-    step.renderOrder = 3;
-    reg(step, 3, { mode: "grow", axis: "y", delay: 0.85, dur: 0.15 });
   })();
 
   /* ================= НАДСТРОЙКА: два варианта ================= */
@@ -674,9 +669,10 @@
     reg(tg, 9, { mode: "rise", delay: 0.62, dur: 0.2 });
   })();
 
-  function setVariant(v) {
-    variant = v; TV.ai.visible = v === "ai"; TV.facade.visible = v === "facade";
-    document.querySelectorAll("[data-var]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.var === v)));
+  function setVariant() {
+    variant = "ai";
+    TV.ai.visible = true;
+    TV.facade.visible = false;
     invalidate();
   }
 
@@ -1008,17 +1004,12 @@
   const pad = k => String(k).padStart(2, "0");
   let t = N, playing = false, tTarget = null, shownK = -1, lastApplied = -1, xray = false, T_NOW = 0, cardOpen = false;
 
-  // кнопки видов и вариантов — из model-data.js
+  // кнопки видов — из model-data.js
   (function () {
     const vs = $("m-view-seg");
     Object.keys(MD.views).forEach(k => {
       const b = document.createElement("button"); b.type = "button"; b.dataset.view = k; b.textContent = MD.views[k].label;
       b.setAttribute("aria-pressed", "false"); b.addEventListener("click", () => goView(k)); vs.appendChild(b);
-    });
-    const vr = $("m-var-seg");
-    ["facade", "ai"].forEach(k => {
-      const b = document.createElement("button"); b.type = "button"; b.dataset.var = k; b.textContent = MD.superstructure[k].label;
-      b.setAttribute("aria-pressed", "false"); b.addEventListener("click", () => setVariant(k)); vr.appendChild(b);
     });
   })();
 
