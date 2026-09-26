@@ -110,11 +110,32 @@
     g.fillStyle = win; g.fillRect(34, 30, 60, 64); g.fillStyle = "rgba(255,255,255,.18)"; g.fillRect(34, 30, 60, 4); return c;
   }
   function logoCanvas() {
-    const [c, g] = cv(512, 512); g.clearRect(0, 0, 512, 512);
-    g.fillStyle = "#3b3e41"; g.font = "600 34px " + FONT; g.textAlign = "center"; g.fillText("TEMIROFF EDIFICE", 256, 120);
-    const half = [[70, 170], [246, 170], [246, 430], [214, 404], [214, 236], [146, 236], [112, 318]];
-    g.beginPath(); half.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.closePath(); g.fill();
-    g.beginPath(); half.forEach(([x, y], i) => i ? g.lineTo(512 - x, y) : g.moveTo(512 - x, y)); g.closePath(); g.fill();
+    const [c, g] = cv(512, 380);
+    g.clearRect(0, 0, 512, 380);
+    g.fillStyle = "#2a2c2e";
+    const pts = [[0, 0], [148, 0], [192, 64], [192, 148], [188, 204], [131, 150], [131, 67], [90, 67], [74, 76]];
+    const axis = 197, s = 440 / 394, ox = 256, oy = 10;
+    function wing(sign) {
+      g.beginPath();
+      pts.forEach((p, i) => {
+        const X = ox + sign * (p[0] - axis) * s, Y = oy + p[1] * s;
+        if (i) g.lineTo(X, Y); else g.moveTo(X, Y);
+      });
+      g.closePath(); g.fill();
+    }
+    wing(1); wing(-1);
+    function spaced(text, y, size, tracking) {
+      g.font = "700 " + size + "px " + FONT;
+      g.textBaseline = "alphabetic";
+      const widths = Array.prototype.map.call(text, ch => g.measureText(ch).width);
+      let total = tracking * (text.length - 1);
+      widths.forEach(w => { total += w; });
+      let x = ox - total / 2;
+      for (let i = 0; i < text.length; i++) { g.fillText(text[i], x, y); x += widths[i] + tracking; }
+    }
+    const base = oy + 204 * s;
+    spaced("TEMIROFF", base + 44, 36, 8);
+    spaced("EDIFICE", base + 80, 22, 9);
     return c;
   }
   function signCanvas(txt) {
@@ -808,7 +829,7 @@
     reg(cafe, 9, { mode: "drop", off: new V3(0, 2.5, 0), delay: 0.3, dur: 0.3 });
   })();
   (function () {   // логотип и вывеска
-    const lg = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 2.1), mat.logo); lg.position.set(2.42, 8.35, 0.04); frontG.add(lg);
+    const lg = new THREE.Mesh(new THREE.PlaneGeometry(2.55, 1.89), mat.logo); lg.position.set(2.42, 8.2, 0.04); frontG.add(lg);
     reg(lg, 9, { mode: "grow", axis: "xy", delay: 0.55, dur: 0.25 });
     const sg = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.4), mat.cafe); sg.position.set(6.0, 2.45, -RC - 0.06); frontG.add(sg);
     reg(sg, 9, { mode: "grow", axis: "xy", delay: 0.6, dur: 0.25 });
