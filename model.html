@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>3D-стройка — Temiroff Edifice</title>
+<link rel="icon" href="favicon.svg"/>
+<link rel="stylesheet" href="assets/site.css"/>
+</head>
+<body data-page="model" data-floor="" data-root="" class="m-page">
+<header class="top">
+  <a class="brand" href="index.html"><img src="favicon.svg" alt="" class="brand-mark"/>Temiroff Edifice<small>Навои · смета</small></a>
+  <button type="button" class="burger" id="burger" aria-label="Меню" aria-expanded="false">☰</button>
+  <nav id="nav"></nav>
+  <div class="who" id="who"></div>
+</header>
+<div id="app" hidden></div>
+
+<main class="m-root" id="m-root">
+  <canvas class="m-scene" id="m-scene" tabindex="0" aria-label="3D-модель реконструкции здания Temiroff Edifice по этапам"></canvas>
+  <div class="m-labels" id="m-labels" aria-hidden="true"></div>
+
+  <div class="m-stamp m-panel">
+    <div class="m-stamp-name">3D-стройка</div>
+    <div class="m-stamp-row"><span>Исходники</span><b>АС · АИ · КЖ · план v4</b></div>
+    <div class="m-stamp-row"><span>Статусы</span><b id="m-rev">data.js</b></div>
+  </div>
+  <div class="m-halt" id="m-halt" role="note" hidden></div>
+
+  <nav class="m-views" aria-label="Вид и слои">
+    <div class="m-seg" role="group" aria-label="Камера" id="m-view-seg"></div>
+    <div class="m-seg" role="group" aria-label="Вариант надстройки" id="m-var-seg"><span class="m-seg-l">Надстройка</span></div>
+    <button type="button" class="m-tog" id="m-xray" aria-pressed="false">Рентген</button>
+    <button type="button" class="m-tog" id="m-elev" aria-pressed="true">Отметки</button>
+    <button type="button" class="m-tog" id="m-ctx" aria-pressed="true">Соседи</button>
+  </nav>
+
+  <aside class="m-card m-panel" id="m-card" aria-live="polite"></aside>
+
+  <div class="m-hint" id="m-hint">Вращать — мышь / палец · масштаб — колесо / щипок · пробел — пуск</div>
+
+  <footer class="m-timeline m-panel">
+    <button type="button" class="m-play" id="m-play" aria-label="Смотреть стройку"></button>
+    <div class="m-track">
+      <button type="button" class="m-now" id="m-now" aria-label="Перейти к текущему состоянию">сейчас</button>
+      <input type="range" id="m-scrub" min="0" max="9" step="0.001" value="9" aria-label="Этап строительства"/>
+      <div class="m-ticks" id="m-ticks"></div>
+    </div>
+    <div class="m-clock" id="m-clock"></div>
+  </footer>
+</main>
+
+<script src="assets/auth.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/works.js"></script>
+<script src="assets/expenses.js"></script>
+<script src="assets/status.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/vendor/three/three.min.js"></script>
+<script src="assets/vendor/three/examples/js/controls/OrbitControls.js"></script>
+<script src="assets/vendor/three/examples/js/environments/RoomEnvironment.js"></script>
+<script src="assets/model-data.js"></script>
+<script src="assets/model.js"></script>
+</body>
+</html>
