@@ -83,7 +83,7 @@ window.EDIFICE_MODEL = {
 
   /* надстройка: два варианта */
   superstructure: {
-    "default": "facade",
+    "default": "ai",
     ai: {   // АИ Insidroom, лист 18 — контур снят с плана (линейных размеров на листе нет)
       label: "АИ",
       xl: 1.75, yrT: 2.27, yrF: 14.5, xR: 13.4, xN: 11.6, yrN: 8.45,
