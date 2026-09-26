@@ -345,9 +345,6 @@
       var on = (page === "floor" && pageFloor === l[2]) || page === l[2] || (page === "index" && l[2] === "index");
       html += '<a href="' + href + '"' + (on ? ' class="on"' : "") + ">" + l[1] + "</a>";
     });
-    if (AUTH.can("seeMoney")) {
-      html += '<a href="' + root + 'assets/smeta-zdanie.xlsx" download>Excel СМР</a>';
-    }
     return html;
   }
 
