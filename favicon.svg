@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Temiroff Edifice">
   <rect width="32" height="32" rx="7" fill="#0C0B0A"/>
-  <path fill="#D9CBB8" d="M7.5 27V13.2a8.5 8.5 0 0 1 17 0V27H7.5z"/>
-  <circle cx="16" cy="14.2" r="4" fill="#0C0B0A"/>
-  <rect x="7.5" y="21.2" width="17" height="1.8" fill="#0C0B0A"/>
+  <path fill="#E7E0D4" d="M5 10.3L13.26 10.3L15.72 13.88L15.72 18.57L15.5 21.7L12.31 18.68L12.31 14.05L10.03 14.05L9.13 14.55Z"/>
+  <path fill="#E7E0D4" d="M27 10.3L18.74 10.3L16.28 13.88L16.28 18.57L16.5 21.7L19.69 18.68L19.69 14.05L21.97 14.05L22.87 14.55Z"/>
 </svg>
