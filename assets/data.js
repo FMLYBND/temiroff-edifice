@@ -10562,9 +10562,33 @@ window.EDIFICE_DATA = {
   "slug": "lift",
   "name": "Лифт ASERA",
   "floorLabel": "шахта + холл",
-  "blurb": "Остановки 1, 2, 3 и 4 этаж. На фитнесе (−1) остановки нет. КП ASERA оплачен. Шахта самонесущая — без проекта усиления каркаса лифт не ставится (см. Документы).",
+  "blurb": "Остановки 1, 2, 3 и 4 этаж. На фитнесе (−1) остановки нет. КП оборудования оплачен. Чертеж шахты 26.09: в свету 1850×2100, по стойкам 2090×2340. Металл каркаса — ведомость ASERA, 119,42 млн, ещё не заявка.",
   "paid": true,
   "gallery": [
+   {
+    "src": "assets/floors/lift/plan.jpg",
+    "caption": "План шахты, без машинного помещения. В свету 1850×2100, стойки 120"
+   },
+   {
+    "src": "assets/floors/lift/vid-a.jpg",
+    "caption": "Вид А. Каркас от B1 −3200 до оголовка +16900"
+   },
+   {
+    "src": "assets/floors/lift/vid-b.jpg",
+    "caption": "Вид Б. 50 мм считается от чистого пола: плитка или таркетт"
+   },
+   {
+    "src": "assets/floors/lift/vid-c.jpg",
+    "caption": "Вид С. Связи и закладные, анкер M20 Hilti"
+   },
+   {
+    "src": "assets/floors/lift/vid-g.jpg",
+    "caption": "Вид Г. Шахта 2100 по стойкам, двери на 1–4 этажах"
+   },
+   {
+    "src": "assets/floors/lift/bom.jpg",
+    "caption": "Ведомость металла ASERA. Материал 119,42 млн, монтаж МК 45 млн"
+   },
    {
     "src": "assets/floors/lift/01.jpg",
     "caption": "Холл, двери лифта (визуализация)"
@@ -10642,6 +10666,196 @@ window.EDIFICE_DATA = {
     "assumed": true,
     "note": "Заявка 2026-0198, оплачена.",
     "stageHint": "paid"
+   },
+   {
+    "id": "lift-st-120x6",
+    "num": 1,
+    "code": "П-1",
+    "section": "Металлокаркас шахты",
+    "name": "Труба 120×120×6, Ст3, ГОСТ 30245-03",
+    "spec": "сталь 380-2005",
+    "unit": "м",
+    "qty": 108,
+    "price": 340000,
+    "sum": 36720000,
+    "priceKind": "exact",
+    "noPrice": false,
+    "funding": "bc",
+    "assumed": false,
+    "note": "Ведомость ASERA, 26.09. 108 м × 340 000. Ещё не заявка.",
+    "stageHint": "counting"
+   },
+   {
+    "id": "lift-st-120x4",
+    "num": 2,
+    "code": "П-2",
+    "section": "Металлокаркас шахты",
+    "name": "Труба 120×120×4, Ст3, ГОСТ 30245-03",
+    "spec": "сталь 380-2005",
+    "unit": "м",
+    "qty": 120,
+    "price": 290000,
+    "sum": 34800000,
+    "priceKind": "exact",
+    "noPrice": false,
+    "funding": "bc",
+    "assumed": false,
+    "note": "120 м × 290 000.",
+    "stageHint": "counting"
+   },
+   {
+    "id": "lift-st-80x4",
+    "num": 3,
+    "code": "П-3",
+    "section": "Металлокаркас шахты",
+    "name": "Труба 80×80×4, Ст3, ГОСТ 30245-03",
+    "spec": "сталь 380-2005",
+    "unit": "м",
+    "qty": 60,
+    "price": 250000,
+    "sum": 15000000,
+    "priceKind": "exact",
+    "noPrice": false,
+    "funding": "bc",
+    "assumed": false,
+    "note": "60 м × 250 000. Связи.",
+    "stageHint": "counting"
+   },
+   {
+    "id": "lift-st-del",
+    "num": 4,
+    "code": "Доставка",
+    "section": "Металлокаркас шахты",
+    "name": "Доставка профиля",
+    "spec": "",
+    "unit": "компл.",
+    "qty": 1,
+    "sum": 8000000,
+    "priceKind": "exact",
+    "noPrice": false,
+    "funding": "bc",
+    "assumed": false,
+    "note": "Строка ведомости.",
+    "stageHint": "counting"
+   },
+   {
+    "id": "lift-st-zd4",
+    "num": 5,
+    "code": "ЗД-1",
+    "section": "Металлокаркас шахты",
+    "name": "Закладная 300×300×20, отверстие Ø22",
+    "spec": "лист Ст3пс, ГОСТ 19903-2015",
+    "unit": "шт",
+    "qty": 4,
+    "sum": 3500000,
+    "priceKind": "exact",
+    "noPrice": false,
+    "funding": "bc",
+    "assumed": false,
+    "note": "База стоек. Анкер M20 Hilti, деталь А на чертеже.",
+    "stageHint": "counting"
+   },
+   {
+    "id": "lift-st-zd16",
+    "num": 6,
+    "code": "ЗД-1",
+    "section": "Металлокаркас шахты",
+    "name": "Пластина крепления t=10",
+    "spec": "лист Ст3пс, средний типоразмер ведомости",
+    "unit": "шт",
+    "qty": 16,
+    "sum": 2500000,
+    "priceKind": "exact",
+    "noPrice": false,
+    "funding": "bc",
+    "assumed": false,
+    "note": "16 шт по ведомости.",
+    "stageHint": "counting"
+   },
+   {
+    "id": "lift-st-zd8",
+    "num": 7,
+    "code": "ЗД-2",
+    "section": "Металлокаркас шахты",
+    "name": "Пластина 300×200×10, отверстие Ø18",
+    "spec": "лист Ст3пс, ГОСТ 19903-2015",
+    "unit": "шт",
+    "qty": 8,
+    "sum": 2500000,
+    "priceKind": "exact",
+    "noPrice": false,
+    "funding": "bc",
+    "assumed": false,
+    "note": "8 шт по ведомости.",
+    "stageHint": "counting"
+   },
+   {
+    "id": "lift-st-m20",
+    "num": 8,
+    "code": "Анкер",
+    "section": "Металлокаркас шахты",
+    "name": "Анкер M20 Hilti",
+    "spec": "под закладную базы",
+    "unit": "шт",
+    "qty": 16,
+    "sum": 5900000,
+    "priceKind": "exact",
+    "noPrice": false,
+    "funding": "bc",
+    "assumed": false,
+    "note": "16 шт.",
+    "stageHint": "counting"
+   },
+   {
+    "id": "lift-st-m16",
+    "num": 9,
+    "code": "Анкер",
+    "section": "Металлокаркас шахты",
+    "name": "Анкер M16 Hilti",
+    "spec": "",
+    "unit": "шт",
+    "qty": 32,
+    "sum": 3000000,
+    "priceKind": "exact",
+    "noPrice": false,
+    "funding": "bc",
+    "assumed": false,
+    "note": "32 шт.",
+    "stageHint": "counting"
+   },
+   {
+    "id": "lift-st-cons",
+    "num": 10,
+    "code": "Расход",
+    "section": "Металлокаркас шахты",
+    "name": "Расходники сварки и окраски",
+    "spec": "УОНИ 13/55, диски, грунт, буры",
+    "unit": "компл.",
+    "qty": 1,
+    "sum": 7500000,
+    "priceKind": "exact",
+    "noPrice": false,
+    "funding": "bc",
+    "assumed": false,
+    "note": "Электрод УОНИ 13/55 — 17 пачек; диски ЭПА 180 — 80 шт; перчатки 2; грунт 30 кг; разбавитель 15 л; валики 3+3; бур M20 и M16 по 1.",
+    "stageHint": "counting"
+   },
+   {
+    "id": "lift-st-mont",
+    "num": 11,
+    "code": "Монтаж",
+    "section": "Металлокаркас шахты",
+    "name": "Монтаж металлоконструкций по ведомости",
+    "spec": "не путать с оплаченным КП",
+    "unit": "компл.",
+    "qty": 1,
+    "sum": 45000000,
+    "priceKind": "exact",
+    "noPrice": false,
+    "funding": "bc",
+    "assumed": false,
+    "note": "45 млн в ведомости. В КП монтаж шахты уже 52,2 млн и он оплачен. Пока обе строки на месте: 45 не в «оплатить» и не в оплаченном. Скажи, если это одна работа — уберу двойной счёт.",
+    "stageHint": "counting"
    },
    {
     "id": "lift-info-осн-машинное-отделение",
@@ -10734,7 +10948,7 @@ window.EDIFICE_DATA = {
     "code": "Осн",
     "section": "Параметры КП",
     "name": "Размер шахты (Ш×Г)",
-    "spec": "1850 × 2100",
+    "spec": "1850 × 2100 в свету, 2090 × 2340 по стойкам",
     "unit": "",
     "qty": null,
     "sum": null,
@@ -10742,7 +10956,7 @@ window.EDIFICE_DATA = {
     "noPrice": true,
     "funding": "bc",
     "assumed": true,
-    "note": "Сходится с КЖ шахты",
+    "note": "Чертеж 26.09: стойка 120, наружный габарит 2090×2340. С КП 1850×2100 сходится.",
     "stageHint": "counting"
    },
    {
@@ -10802,7 +11016,7 @@ window.EDIFICE_DATA = {
     "code": "Осн",
     "section": "Параметры КП",
     "name": "Высота подъёма",
-    "spec": "не указана",
+    "spec": "от 0.000 до 4 эт. +10 200",
     "unit": "",
     "qty": null,
     "sum": null,
@@ -10810,7 +11024,7 @@ window.EDIFICE_DATA = {
     "noPrice": true,
     "funding": "bc",
     "assumed": true,
-    "note": "По КЖ = 10 800 мм. Внести в КП",
+    "note": "Чертеж: 1 эт. 0.000, 2 эт. +3600, 3 эт. +6900, 4 эт. +10200, оголовок +16900, приямок −1500, B1 −3200. 50 мм на виде Б — от чистого пола (плитка, таркетт), не от плиты.",
     "stageHint": "counting"
    },
    {
@@ -11218,7 +11432,7 @@ window.EDIFICE_DATA = {
     "noPrice": true,
     "funding": "bc",
     "assumed": true,
-    "note": "Приямок, бетон, закладные — на заказчике",
+    "note": "Ведомость металла пришла: материал 119,42 млн. Приямок и бетон по-прежнему отдельно. Монтаж МК в ведомости 45 млн — рядом уже оплаченные 52,2 млн из КП.",
     "stageHint": "counting"
    },
    {
@@ -11252,7 +11466,7 @@ window.EDIFICE_DATA = {
    {
     "n": "2",
     "title": "Свести этажность: 3 остановки (КП) ↔ 4 остановки (КЖ шахты)",
-    "why": "",
+    "why": "Чертеж шахты показывает B1, 1, 2, 3 и 4 этаж. В шапке приложенного КП всё ещё 3/3/3. Остановки в смете не менял.",
     "who": "Тимур + ASERA",
     "prio": "Критично",
     "open": true,
@@ -11359,7 +11573,7 @@ window.EDIFICE_DATA = {
    },
    {
     "n": "14",
-    "title": "Заложить в общий бюджет стройчасть (приямок, бетон, закладные)",
+    "title": "Металл шахты пришёл ведомостью: 119,42 млн материал. Монтаж 45 млн сверить с оплаченными 52,2 млн",
     "why": "",
     "who": "Тимур",
     "prio": "Высокий",
@@ -11394,7 +11608,9 @@ window.EDIFICE_DATA = {
     "stageHint": "counting"
    }
   ],
-  "total": 368965000
+  "total": 533385000,
+  "exactSum": 533385000,
+  "estSum": 0
  },
  "contracts": [
   {
