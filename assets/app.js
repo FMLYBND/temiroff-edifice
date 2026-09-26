@@ -272,6 +272,16 @@
     return base;
   }
 
+  function stageOfItem(it) {
+    if (!it) return "counting";
+    var loc = localOverlay[it.id];
+    if (loc && loc.stage) return loc.stage;
+    var f = fileMap()[it.id];
+    if (f && f.stage) return f.stage;
+    return it.stageHint || it.stage || "counting";
+  }
+  window.EDIFICE_STAGE = { stageOf: stageOfItem };
+
   function isDirty(id) { return !!localOverlay[id]; }
   function dirtyCount() { return Object.keys(localOverlay).length; }
 
@@ -322,6 +332,7 @@
       ["floors/office.html", "Офис", "office"],
       ["floors/terrace.html", "Терраса", "terrace"],
       ["floors/facade.html", "Фасад", "facade"],
+      ["model.html", "3D-стройка", "model"],
       ["lift.html", "Лифт", "lift"],
       ["works.html", "Здание", "works"],
       ["expenses.html", "Расходы", "expenses"],
@@ -1111,10 +1122,12 @@
     else if (page === "works") renderWorks(app);
     else if (page === "docs") renderDocs(app);
     else if (page === "expenses") renderExpenses(app);
+    else if (page === "model") { /* сцену рисует assets/model.js */ }
     else {
       app.innerHTML = '<p class="muted">Страница снята. <a href="' + root + 'index.html">На смету</a></p>';
     }
     renderBanner();
+    try { document.dispatchEvent(new CustomEvent("edifice:route")); } catch (e) {}
   }
 
   loadRemoteOverlay().then(route);
