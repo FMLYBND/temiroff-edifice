@@ -27,7 +27,7 @@
     ["none", "не заявлено"],
     ["approve", "ждёт утверждения"],
     ["sign", "на подписи"],
-    ["customer", "заявлено заказчиком"],
+    ["customer", "не в сумме БЦ"],
     ["debt", "добавлена в долг"],
     ["bought", "закуплено"],
     ["advance", "аванс оплачен"],
@@ -37,7 +37,7 @@
   var FLOOR_TITLE = {
     fitness: "Фитнес",
     cafe: "Socials",
-    salon: "Салон",
+    salon: "Студия",
     office: "Офис",
     terrace: "Терраса",
     facade: "Фасад",
@@ -233,7 +233,7 @@
     return exact ? "exact" : "est";
   }
   function sumTitle(pay, priceKind) {
-    if (pay === "customer") return "заявлено заказчиком";
+    if (pay === "customer") return "не в сумме БЦ";
     if (pay === "paid") return "оплачено";
     if (pay === "advance") return "аванс оплачен";
     if (pay === "bought") return "закуплено";
@@ -328,7 +328,7 @@
       ["index.html", "Смета", "index"],
       ["floors/fitness.html", "Фитнес", "fitness"],
       ["floors/cafe.html", "Socials", "cafe"],
-      ["floors/salon.html", "Салон", "salon"],
+      ["floors/salon.html", "Студия", "salon"],
       ["floors/office.html", "Офис", "office"],
       ["floors/terrace.html", "Терраса", "terrace"],
       ["floors/facade.html", "Фасад", "facade"],
@@ -638,7 +638,7 @@
     html += '<div class="panel"><div class="lbl">Точные (смета/КП)</div><div class="num exact">' + money(f.exactSum, true) + '</div><div class="sub">' + money(f.exactSum) + "</div></div>";
     html += '<div class="panel"><div class="lbl">Примерные БЦ</div><div class="num est">' + money(f.estSum, true) + '</div><div class="sub">' + money(f.estSum) + "</div></div>";
     if (f.customerSum) {
-      html += '<div class="panel"><div class="lbl">Заявлено заказчиком</div><div class="num cust">' + money(f.customerSum, true) + '</div><div class="sub">не в сумме БЦ · список Наргизы</div></div>';
+      html += '<div class="panel"><div class="lbl">Не в сумме БЦ</div><div class="num cust">' + money(f.customerSum, true) + '</div><div class="sub">список Милы · отдельно от сметы</div></div>';
     } else {
       html += '<div class="panel"><div class="lbl">Без количества</div><div class="num">' + (f.noQty || 0) + '</div><div class="sub">сумма по ним 0 — итог занижен</div></div>';
     }
@@ -698,7 +698,7 @@
     html += '<div class="kpi kpi-4">';
     html += '<div class="panel"><div class="lbl">Этажи · смета БЦ</div><div class="num">' + money(meta.floorsSum, true) + '</div><div class="sub">' + money(meta.floorsSum) + " сум</div></div>";
     html += '<div class="panel"><div class="lbl">Точные (смета / КП)</div><div class="num exact">' + money(meta.exactSum, true) + '</div><div class="sub">' + money(meta.exactSum) + "</div></div>";
-    html += '<div class="panel"><div class="lbl">Примерные</div><div class="num est">' + money(meta.estSum, true) + '</div><div class="sub">без закупок заказчика</div></div>';
+    html += '<div class="panel"><div class="lbl">Примерные</div><div class="num est">' + money(meta.estSum, true) + '</div><div class="sub">без списка студии</div></div>';
     html += '<div class="panel"><div class="lbl">СМР здания</div><div class="num exact">' + money(meta.cmr, true) + '</div><div class="sub">' + money(meta.cmr) + " сум</div></div>";
     html += "</div>";
     html += '<div class="kpi kpi-4">';
@@ -707,7 +707,7 @@
     html += '<div class="panel"><div class="lbl">На подписи</div><div class="num est">' + money(ex.sign, true) + '</div><div class="sub">' + ex.nSign + " заявки · ещё не в долге</div></div>";
     html += '<div class="panel"><div class="lbl">Лифт ASERA · КП</div><div class="num paid">' + money(meta.liftSum, true) + '</div><div class="sub">оплачен · остановки 1–4</div></div>';
     html += "</div>";
-    html += '<p class="legend"><span class="num exact">■ точная</span><span class="num est">■ примерная</span><span class="num paid">■ оплачено</span><span class="num debt">■ долг</span><span class="num cust">■ заказчик, салон</span></p>';
+    html += '<p class="legend"><span class="num exact">■ точная</span><span class="num est">■ примерная</span><span class="num paid">■ оплачено</span><span class="num debt">■ долг</span><span class="num cust">■ не в сумме БЦ</span></p>';
     if (AUTH.can("seeMoney")) html += '<p class="exclude">' + esc(meta.note) + "</p>";
     if (USER && USER.director) {
       html += '<p class="exclude">Временный просмотр для руководства · до ' + esc(meta.directorUntil || AUTH.directorUntil) + "</p>";
@@ -782,6 +782,110 @@
     lightboxBind(el);
   }
 
+  function milaVersionLabel(v) {
+    var p = String(v || "").split("-");
+    if (p.length !== 3) return v || "";
+    return p[2] + "." + p[1] + "." + p[0];
+  }
+  function milaChanges(prev, cur) {
+    if (!prev || !prev.rooms) return null;
+    var A = {}, B = {};
+    function fill(data, box) {
+      data.rooms.forEach(function (r) {
+        r.items.forEach(function (it) {
+          box[r.room + "\u0000" + it.name] = { room: r.room, name: it.name, qty: String(it.qty == null ? "" : it.qty), status: it.status };
+        });
+      });
+    }
+    fill(prev, A);
+    fill(cur, B);
+    var added = [], removed = [], changed = [];
+    Object.keys(B).forEach(function (k) {
+      if (!A[k]) added.push(B[k]);
+      else if (A[k].qty !== B[k].qty || A[k].status !== B[k].status) changed.push({ now: B[k], was: A[k] });
+    });
+    Object.keys(A).forEach(function (k) { if (!B[k]) removed.push(A[k]); });
+    return { added: added, removed: removed, changed: changed };
+  }
+  function milaDiffHtml(prev, cur) {
+    var d = milaChanges(prev, cur);
+    var html = "<h2>Изменения с прошлой версии</h2>";
+    if (!d) return html + '<p class="muted">Это первая версия, сравнивать не с чем.</p>';
+    if (!d.added.length && !d.removed.length && !d.changed.length) return html + '<p class="muted">Совпало с прошлой версией.</p>';
+    html += "<div class='need-list'>";
+    d.added.forEach(function (it) {
+      html += '<div class="need"><strong>Новая строка</strong><div class="muted">' + esc(it.room) + " · " + esc(it.name) + " · " + esc(it.qty) + " · " + esc(it.status) + "</div></div>";
+    });
+    d.removed.forEach(function (it) {
+      html += '<div class="need"><strong>Убранная строка</strong><div class="muted">' + esc(it.room) + " · " + esc(it.name) + "</div></div>";
+    });
+    d.changed.forEach(function (it) {
+      html += '<div class="need"><strong>Изменилось</strong><div class="muted">' + esc(it.now.room) + " · " + esc(it.now.name);
+      if (it.was.qty !== it.now.qty) html += " · кол-во " + esc(it.was.qty) + " → " + esc(it.now.qty);
+      if (it.was.status !== it.now.status) html += " · статус " + esc(it.was.status) + " → " + esc(it.now.status);
+      html += "</div></div>";
+    });
+    return html + "</div>";
+  }
+  function renderMila(el) {
+    var data = window.EDIFICE_MILA;
+    if (!data || !data.rooms) {
+      $("#floor-pane", el).innerHTML = "<p>Список не загрузился.</p>";
+      return;
+    }
+    var n = 0;
+    var statuses = [];
+    data.rooms.forEach(function (r) {
+      n += r.items.length;
+      r.items.forEach(function (it) {
+        if (statuses.indexOf(it.status) < 0) statuses.push(it.status);
+      });
+    });
+    var hash = readHash();
+    var html = '<div class="mila-head"><h2>Список Милы · версия от ' + esc(milaVersionLabel(data.version)) + " · " + n + ' позиций</h2>';
+    html += '<a class="btn" href="' + asset("assets/Список_Милы_2026-09-28.xlsx") + '" download>Скачать оригинал (.xlsx)</a></div>';
+    html += '<p class="subtle">зелёным — как отмечено в файле Милы</p>';
+    html += milaDiffHtml(window.EDIFICE_MILA_PREV, data);
+    html += '<div class="chips" id="mila-chips"></div><div id="mila-body"></div>';
+    $("#floor-pane", el).innerHTML = html;
+    function paint() {
+      var cur = hash.mst || "all";
+      var chips = '<button type="button" class="chip' + (cur === "all" ? " on" : "") + '" data-mst="all">Всё · ' + n + "</button>";
+      statuses.forEach(function (st) {
+        chips += '<button type="button" class="chip' + (cur === st ? " on" : "") + '" data-mst="' + esc(st) + '">' + esc(st) + "</button>";
+      });
+      $("#mila-chips", el).innerHTML = chips;
+      $all("[data-mst]", el).forEach(function (b) {
+        b.addEventListener("click", function () {
+          hash.mst = b.getAttribute("data-mst");
+          if (hash.mst === "all") delete hash.mst;
+          hash.view = "mila";
+          writeHash(hash);
+          paint();
+        });
+      });
+      var body = "";
+      data.rooms.forEach(function (r) {
+        var rows = r.items.filter(function (it) { return cur === "all" || it.status === cur; });
+        if (!rows.length) return;
+        body += '<details class="sec mila-room" open><summary><strong>' + esc(r.room) + '</strong><span class="subtle">' + rows.length + "</span></summary>";
+        body += '<div class="table-wrap"><table><thead><tr><th>№</th><th>Наименование</th><th>Кол-во</th><th>Статус</th><th>Примечание</th></tr></thead><tbody>';
+        rows.forEach(function (it) {
+          body += '<tr class="' + (it.green ? "mila-green" : "") + '">';
+          body += '<td class="id" data-th="№">' + esc(it.n) + "</td>";
+          body += '<td class="name" data-th="Наименование">' + esc(it.name) + "</td>";
+          body += '<td data-th="Кол-во">' + esc(it.qty) + "</td>";
+          body += '<td data-th="Статус"><span class="pill mila-st">' + esc(it.status) + "</span></td>";
+          body += '<td data-th="Примечание">' + esc(it.note) + "</td>";
+          body += "</tr>";
+        });
+        body += "</tbody></table></div></details>";
+      });
+      $("#mila-body", el).innerHTML = body;
+    }
+    paint();
+  }
+
   function renderFloor(el, slug) {
     var f = DATA.floors[slug];
     if (!f) { el.innerHTML = "<p>Нет этажа</p>"; return; }
@@ -795,23 +899,26 @@
       lightboxBind(el);
       return;
     }
-    html += moneyStrip(f);
-    html += '<div class="chips" id="sec-chips"></div>';
-    html += '<div id="sec-body"></div>';
-    html += issuesHtml(f.issues);
-    html += '<p class="legend"><span class="num exact">■ точная цифра</span><span class="num est">■ примерная оценка</span><span class="num paid">■ оплачено</span><span class="num debt">■ в долгу</span><span class="num cust">■ заявлено заказчиком</span><span class="qty-miss">■ нет количества</span></p>';
+    var smeta = moneyStrip(f);
+    smeta += '<div class="chips" id="sec-chips"></div>';
+    smeta += '<div id="sec-body"></div>';
+    smeta += issuesHtml(f.issues);
+    smeta += '<p class="legend"><span class="num exact">■ точная цифра</span><span class="num est">■ примерная оценка</span><span class="num paid">■ оплачено</span><span class="num debt">■ в долгу</span><span class="num cust">■ не в сумме БЦ</span><span class="qty-miss">■ нет количества</span></p>';
+    if (slug === "salon") html += '<div class="chips" id="floor-views"></div>';
+    html += '<div id="floor-pane"></div>';
     el.innerHTML = html;
     lightboxBind(el);
 
     var hash = readHash();
-    function paint() {
+    function paintSmeta() {
+      $("#floor-pane", el).innerHTML = smeta;
       var cur = hash.sec || "all";
       var chips = '<button type="button" class="chip' + (cur === "all" ? " on" : "") + '" data-sec="all">Все · ' + (f.items || []).length + "</button>";
       sectionList(f.items).forEach(function (s) {
         chips += '<button type="button" class="chip' + (cur === s.key ? " on" : "") + '" data-sec="' + esc(s.key) + '">' + esc(s.name);
         chips += " · " + s.n;
         if (AUTH.can("seeMoney") && s.sum) chips += " · " + money(s.sum, true);
-        if (AUTH.can("seeMoney") && s.cust) chips += " + зак. " + money(s.cust, true);
+        if (AUTH.can("seeMoney") && s.cust) chips += " + вне БЦ " + money(s.cust, true);
         chips += "</button>";
       });
       $("#sec-chips", el).innerHTML = chips;
@@ -819,13 +926,30 @@
         b.addEventListener("click", function () {
           hash.sec = b.getAttribute("data-sec");
           writeHash(hash);
-          paint();
+          paintSmeta();
         });
       });
       $("#sec-body", el).innerHTML = itemsTable(f.items || [], cur === "all" ? "" : cur);
       wireRowEdits($("#sec-body", el));
     }
-    paint();
+    function paintView() {
+      if (slug !== "salon") { paintSmeta(); return; }
+      var view = hash.view === "mila" ? "mila" : "smeta";
+      var bar = '<button type="button" class="chip' + (view === "smeta" ? " on" : "") + '" data-view="smeta">Смета</button>';
+      bar += '<button type="button" class="chip' + (view === "mila" ? " on" : "") + '" data-view="mila">Список Милы</button>';
+      $("#floor-views", el).innerHTML = bar;
+      $all("[data-view]", el).forEach(function (b) {
+        b.addEventListener("click", function () {
+          hash.view = b.getAttribute("data-view");
+          if (hash.view !== "mila") delete hash.view;
+          writeHash(hash);
+          paintView();
+        });
+      });
+      if (view === "mila") renderMila(el);
+      else paintSmeta();
+    }
+    paintView();
   }
 
   function renderLift(el) {
