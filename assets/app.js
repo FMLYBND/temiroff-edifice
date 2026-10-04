@@ -546,13 +546,6 @@
     return html;
   }
 
-  function directorHref() {
-    var file = (AUTH.directorToken ? ("director.html?t=" + AUTH.directorToken) : (DATA.meta.directorLink || "director.html"));
-    var path = (location.pathname || "/").replace(/[^/]+$/, "") + file;
-    if (location.protocol === "file:") return file;
-    return (location.origin || "") + path;
-  }
-
   /* sign / nSign — только заявки, заведённые в 1С (сходится с отчётом);
      «Не добавлена» в реестр — отдельно в signOut / nSignOut. */
   function expenseTotals() {
@@ -580,7 +573,6 @@
       if (c.pay === "paid" || c.pay === "advance") return;
       wait.push(c);
     });
-    var now = ex.debt + ex.sign;
     var adv = 0;
     var advNames = [];
     wait.forEach(function (c) { if (c.advanceSum) { adv += c.advanceSum; advNames.push(c.name.toLowerCase() + " " + (c.advancePct || "") + "%"); } });
