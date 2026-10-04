@@ -17,7 +17,7 @@
 | СМР здания: разделы, реестр, итоги «Оплачено / В долгах» | `assets/works.js` (итоги в `meta` — руками) |
 | Стадии позиций | `assets/status.js` |
 | Код сайта | `assets/app.js` |
-| 3D-стройка: размеры, этапы, тексты | `assets/model-data.js` (журнал правок — `docs/model-changelog.md`) |
+| 3D-стройка: размеры, этапы, тексты | `assets/model-data.js` (журнал правок — `docs/model-changelog.md`, что нужно для модели — `docs/model-needs.md`) |
 | 3D-стройка: сцена | `assets/model.js`, Three.js r147 в `assets/vendor/three/` (работает офлайн) |
 
 Плитки «Уже оплачено / В долгу / На подписи» на главной и в «Расходах» считаются сами из `expenses.js`.
