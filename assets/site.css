@@ -66,6 +66,11 @@ header.top nav::-webkit-scrollbar{display:none;height:0;}
 .m-pill[data-st="waiting"]::before,.m-tick[data-st="waiting"] .m-dot{background:var(--warn);}
 .m-pill[data-st="declared"]::before,.m-tick[data-st="declared"] .m-dot{background:var(--st-declared);}
 .m-pill[data-st="nodata"]{color:var(--muted);border-style:dashed;}
+.m-site{margin:0 0 10px;padding:8px 10px;border-left:2px solid var(--ok);background:rgba(255,255,255,.03);border-radius:0 8px 8px 0;font-size:12.5px;line-height:1.45;color:#ddd6cc;}
+.m-site b{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ok);margin-bottom:2px;}
+.m-site i{font-style:normal;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--subtle);white-space:nowrap;}
+.m-site-weak{border-left-style:dashed;border-left-color:var(--warn);}
+.m-site-weak b{color:var(--warn);}
 .m-facts{display:grid;grid-template-columns:1fr auto auto;gap:6px 10px;margin:0 0 12px;padding:10px 0 0;border-top:1px solid var(--line);align-items:baseline;}
 .m-facts dt{color:var(--muted);font-size:12.5px;}
 .m-facts dd{margin:0;font-size:12.5px;font-weight:600;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}

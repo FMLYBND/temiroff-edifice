@@ -960,6 +960,13 @@
     const S = window.EDIFICE_STAGE;
     return S && S.stageOf ? S.stageOf(it) : (it.stageHint || it.stage || "counting");
   }
+  // ось «факт»: последняя запись MD.site по этапу (дата дд.мм.гггг, при равной — нижняя в списке)
+  const dayNum = d => { const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(d || ""); return m ? +(m[3] + m[2] + m[1]) : 0; };
+  function siteFact(id) {
+    let best = null;
+    (MD.site || []).forEach(f => { if (id && f.stage === id && (!best || dayNum(f.date) >= dayNum(best.date))) best = f; });
+    return best;
+  }
   function computeStatuses() {
     const DATA = window.EDIFICE_DATA || {};
     const contracts = {}; (DATA.contracts || []).forEach(c => { contracts[c.id] = c; });
@@ -986,9 +993,9 @@
         f.items.forEach(it => { const s = itemStage(it); cnt[s] = (cnt[s] || 0) + 1; if (rank(s) < rank(worst)) worst = s; });
         src.push({ kind: "floor", stage: worst, label: f.name || slug, count: f.items.length, cnt });
       });
-      if (!src.length) return { stage: "nodata", src };
-      const stage = src.reduce((a, s) => rank(s.stage) < rank(a) ? s.stage : a, "done");
-      return { stage, src };
+      const money = src.length ? src.reduce((a, s) => rank(s.stage) < rank(a) ? s.stage : a, "done") : "nodata";
+      const fact = siteFact(st.id);
+      return { stage: fact ? fact.status : money, money, fact, src };
     });
   }
   function nowStage() {
@@ -1070,7 +1077,11 @@
   function statusHtml(k) {
     const ss = stageStatus[k]; if (!ss) return "";
     const pill = `<span class="m-pill" data-st="${ss.stage}">${SL[ss.stage] || ss.stage}</span>`;
-    let src = "";
+    let src = "", site = "";
+    if (ss.fact) {
+      const weak = /слов/i.test(ss.fact.basis || "");
+      site = `<div class="m-site${weak ? " m-site-weak" : ""}"><b>Факт · ${esc(ss.fact.date)}</b> ${esc(ss.fact.text)} <i>${esc(ss.fact.basis || "")}</i></div>`;
+    }
     if (ss.fixed) src = "существующее состояние";
     else if (!ss.src.length) src = "в data.js нет позиций для этого этапа";
     else {
@@ -1090,7 +1101,9 @@
       }
       src = parts.join(" · ");
     }
-    return `<div class="m-status">${pill}<span>${src}</span></div>`;
+    // вторая ось — смета и договоры; при факте показывается своей стадией
+    if (ss.fact) src = `по смете — ${SL[ss.money] || esc(ss.money)}${src ? ": " + src : ""}`;
+    return `${site}<div class="m-status">${pill}<span>${src}</span></div>`;
   }
   function renderCard(k) {
     const s = STAGES[k], P = priv && priv.stages ? priv.stages[k] : null;
