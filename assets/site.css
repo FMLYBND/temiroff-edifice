@@ -71,6 +71,10 @@ header.top nav::-webkit-scrollbar{display:none;height:0;}
 .m-facts dd{margin:0;font-size:12.5px;font-weight:600;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .m-src{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--subtle);border:1px solid var(--line);padding:2px 5px;border-radius:4px;justify-self:end;white-space:nowrap;}
 .m-src-a{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,var(--line));}
+.m-fact{border:1px dashed var(--warn);border-radius:8px;padding:8px 10px;margin:0 0 10px;font-size:13px;line-height:1.45;color:#ddd6cc;}
+.m-fact.ok{border-style:solid;border-color:var(--ok);}
+.m-fact b{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--warn);margin-bottom:4px;}
+.m-fact.ok b{color:var(--ok);}
 .m-note,.m-check{border-radius:8px;padding:9px 11px;font-size:12.5px;line-height:1.45;margin-top:10px;}
 .m-note{background:var(--elevated);border:1px solid var(--line);color:#ddd6cc;}
 .m-check{border:1px dashed var(--danger);background:rgba(193,122,106,.1);}
