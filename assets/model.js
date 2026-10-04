@@ -912,7 +912,8 @@
   })();
   const conflictPos = {
     head: new V3((LF.x0 + LF.x1) / 2, 15.2, LF.zc),
-    step: new V3(LF.x1 + 0.5, (L3 + LT) / 2, LF.zc)
+    step: new V3(LF.x1 + 0.5, (L3 + LT) / 2, LF.zc),
+    levels: new V3(LF.x1 + 0.5, L2, LF.zc)
   };
   MD.conflicts.forEach(c => { if (conflictPos[c.id]) addLabel("m-flag", `<i></i><span>${c.text}</span>`, conflictPos[c.id], c.from, 0, "flag"); });
 
@@ -973,6 +974,11 @@
       if (cfg.lift && DATA.lift && DATA.lift.items) {
         const hits = DATA.lift.items.filter(it => cfg.lift.indexOf(itemStage(it)) >= 0);
         hits.forEach(it => src.push({ kind: "lift", stage: itemStage(it), label: it.name }));
+      }
+      // позиции лифта по id — в источнике при любой стадии (каркас шахты по заявкам)
+      if (cfg.liftIds && DATA.lift && DATA.lift.items) {
+        DATA.lift.items.filter(it => cfg.liftIds.indexOf(it.id) >= 0)
+          .forEach(it => src.push({ kind: "lift", stage: itemStage(it), label: it.name }));
       }
       (cfg.floors || []).forEach(slug => {
         const f = floors[slug]; if (!f || !f.items || !f.items.length) return;
@@ -1071,7 +1077,10 @@
       const parts = [];
       ss.src.filter(s => s.kind === "contract").forEach(s => parts.push(`${esc(s.label)} — ${SL[s.stage] || esc(s.stage)}`));
       const lift = ss.src.filter(s => s.kind === "lift");
-      if (lift.length) parts.push(`ждут: ${lift.map(s => esc(s.label)).join(", ")}`);
+      const byStage = {};
+      lift.forEach(s => { (byStage[s.stage] = byStage[s.stage] || []).push(esc(s.label)); });
+      Object.keys(byStage).sort((a, b) => rank(a) - rank(b))
+        .forEach(st => parts.push(`${SL[st] || esc(st)}: ${byStage[st].join(", ")}`));
       const fl = ss.src.filter(s => s.kind === "floor");
       if (fl.length) {
         const cnt = {}; let total = 0;
