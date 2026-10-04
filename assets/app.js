@@ -546,24 +546,24 @@
     return html;
   }
 
-  function directorHref() {
-    var file = (AUTH.directorToken ? ("director.html?t=" + AUTH.directorToken) : (DATA.meta.directorLink || "director.html"));
-    var path = (location.pathname || "/").replace(/[^/]+$/, "") + file;
-    if (location.protocol === "file:") return file;
-    return (location.origin || "") + path;
-  }
-
+  /* sign / nSign — только заявки, заведённые в 1С (сходится с отчётом);
+     «Не добавлена» в реестр — отдельно в signOut / nSignOut. */
   function expenseTotals() {
-    var out = { paid: 0, debt: 0, sign: 0, nPaid: 0, nDebt: 0, nSign: 0, items: [] };
+    var out = { paid: 0, debt: 0, sign: 0, signOut: 0, nPaid: 0, nDebt: 0, nSign: 0, nSignOut: 0, items: [] };
     var list = (EXPENSES && EXPENSES.items) || [];
     list.forEach(function (p) {
       var s = Number(p.sum) || 0;
       if (p.status === "paid") { out.paid += s; out.nPaid += 1; }
       else if (p.status === "debt") { out.debt += s; out.nDebt += 1; }
+      else if (p.status === "sign" && p.registry === "Не добавлена") { out.signOut += s; out.nSignOut += 1; }
       else if (p.status === "sign") { out.sign += s; out.nSign += 1; }
     });
     out.items = list.slice().sort(byPriority);
     return out;
+  }
+
+  function signOutNote(ex) {
+    return ex.nSignOut ? " · +" + money(ex.signOut) + " не заведено в 1С" : "";
   }
 
   function payNowHtml() {
@@ -573,7 +573,6 @@
       if (c.pay === "paid" || c.pay === "advance") return;
       wait.push(c);
     });
-    var now = ex.debt + ex.sign;
     var adv = 0;
     var advNames = [];
     wait.forEach(function (c) { if (c.advanceSum) { adv += c.advanceSum; advNames.push(c.name.toLowerCase() + " " + (c.advancePct || "") + "%"); } });
@@ -581,7 +580,7 @@
     html += '<div class="lbl">Что нужно оплатить</div>';
     html += '<div class="kpi kpi-4">';
     html += '<div class="panel"><div class="lbl">В реестре — оплатить</div><div class="num debt">' + money(ex.debt, true) + '</div><div class="sub">' + ex.nDebt + " заявки · " + money(ex.debt) + "</div></div>";
-    html += '<div class="panel"><div class="lbl">На подписи — провести</div><div class="num est">' + money(ex.sign, true) + '</div><div class="sub">' + ex.nSign + " заявки · " + money(ex.sign) + "</div></div>";
+    html += '<div class="panel"><div class="lbl">На подписи — провести</div><div class="num est">' + money(ex.sign, true) + '</div><div class="sub">' + ex.nSign + " заявки · " + money(ex.sign) + signOutNote(ex) + "</div></div>";
     html += '<div class="panel"><div class="lbl">Авансы (ждут денег)</div><div class="num est">' + money(adv, true) + '</div><div class="sub">' + esc(advNames.join(", ") || "нет ожидающих") + '</div></div>';
     html += '<div class="panel"><div class="lbl">Уже оплачено</div><div class="num paid">' + money(ex.paid, true) + '</div><div class="sub">' + ex.nPaid + " заявки 1С · " + money(ex.paid) + '</div></div>';
     html += "</div>";
@@ -704,7 +703,7 @@
     html += '<div class="kpi kpi-4">';
     html += '<div class="panel"><div class="lbl">Оплачено по заявкам</div><div class="num paid">' + money(ex.paid, true) + '</div><div class="sub">' + ex.nPaid + " заявки · " + money(ex.paid) + "</div></div>";
     html += '<div class="panel"><div class="lbl">В долгу</div><div class="num debt">' + money(ex.debt, true) + '</div><div class="sub">' + ex.nDebt + " в реестре · " + money(ex.debt) + "</div></div>";
-    html += '<div class="panel"><div class="lbl">На подписи</div><div class="num est">' + money(ex.sign, true) + '</div><div class="sub">' + ex.nSign + " заявки · ещё не в долге</div></div>";
+    html += '<div class="panel"><div class="lbl">На подписи</div><div class="num est">' + money(ex.sign, true) + '</div><div class="sub">' + ex.nSign + " заявки · ещё не в долге" + signOutNote(ex) + "</div></div>";
     html += '<div class="panel"><div class="lbl">Лифт ASERA · КП</div><div class="num paid">' + money(meta.liftSum, true) + '</div><div class="sub">оплачен · остановки 1–4</div></div>';
     html += "</div>";
     html += '<p class="legend"><span class="num exact">■ точная</span><span class="num est">■ примерная</span><span class="num paid">■ оплачено</span><span class="num debt">■ долг</span><span class="num cust">■ не в сумме БЦ</span></p>';
@@ -1188,7 +1187,7 @@
     html += '<div class="kpi kpi-4">';
     html += '<div class="panel"><div class="lbl">Оплачено</div><div class="num paid">' + money(ex.paid, true) + '</div><div class="sub">' + ex.nPaid + " · " + money(ex.paid) + "</div></div>";
     html += '<div class="panel"><div class="lbl">В долгу</div><div class="num debt">' + money(ex.debt, true) + '</div><div class="sub">' + ex.nDebt + " в реестре</div></div>";
-    html += '<div class="panel"><div class="lbl">На подписи</div><div class="num est">' + money(ex.sign, true) + '</div><div class="sub">' + ex.nSign + " · не в долге</div></div>";
+    html += '<div class="panel"><div class="lbl">На подписи</div><div class="num est">' + money(ex.sign, true) + '</div><div class="sub">' + ex.nSign + " · не в долге" + signOutNote(ex) + "</div></div>";
     html += '<div class="panel"><div class="lbl">Всего заявок</div><div class="num">' + ex.items.length + '</div><div class="sub">срез ' + esc((EXPENSES && EXPENSES.updated) || "") + "</div></div>";
     html += "</div>";
     html += '<div class="chips" id="echips"></div><div id="ebody"></div>';
@@ -1198,7 +1197,7 @@
       var chips = [
         ["all", "Все · " + ex.items.length],
         ["prio", "Приоритет · " + ex.items.filter(function (p) { return p.priority; }).length],
-        ["sign", "На подписи · " + ex.nSign],
+        ["sign", "На подписи · " + (ex.nSign + ex.nSignOut)],
         ["debt", "В долгу · " + ex.nDebt],
         ["paid", "Оплачено · " + ex.nPaid]
       ];
