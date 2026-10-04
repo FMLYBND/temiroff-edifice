@@ -912,7 +912,8 @@
   })();
   const conflictPos = {
     head: new V3((LF.x0 + LF.x1) / 2, 15.2, LF.zc),
-    step: new V3(LF.x1 + 0.5, (L3 + LT) / 2, LF.zc)
+    step: new V3(LF.x1 + 0.5, (L3 + LT) / 2, LF.zc),
+    floors: new V3((LF.x0 + LF.x1) / 2, (L2 + L3) / 2, LF.zc)
   };
   MD.conflicts.forEach(c => { if (conflictPos[c.id]) addLabel("m-flag", `<i></i><span>${c.text}</span>`, conflictPos[c.id], c.from, 0, "flag"); });
 
@@ -959,30 +960,44 @@
     const S = window.EDIFICE_STAGE;
     return S && S.stageOf ? S.stageOf(it) : (it.stageHint || it.stage || "counting");
   }
+  function estimateOf(st, contracts, floors, DATA) {
+    const cfg = st.status || {}, src = [];
+    if (cfg.fixed) return { stage: cfg.fixed, src: [], fixed: true };
+    (cfg.contracts || []).forEach(id => {
+      const c = contracts[id];
+      if (c && c.stage) src.push({ kind: "contract", stage: c.stage, label: c.name || id, href: c.href });
+    });
+    if (cfg.lift && DATA.lift && DATA.lift.items) {
+      const hits = DATA.lift.items.filter(it => cfg.lift.indexOf(itemStage(it)) >= 0);
+      hits.forEach(it => src.push({ kind: "lift", stage: itemStage(it), label: it.name }));
+    }
+    (cfg.floors || []).forEach(slug => {
+      const f = floors[slug]; if (!f || !f.items || !f.items.length) return;
+      const cnt = {}; let worst = "done";
+      f.items.forEach(it => { const s = itemStage(it); cnt[s] = (cnt[s] || 0) + 1; if (rank(s) < rank(worst)) worst = s; });
+      src.push({ kind: "floor", stage: worst, label: f.name || slug, count: f.items.length, cnt });
+    });
+    if (!src.length) return { stage: "nodata", src };
+    const stage = src.reduce((a, s) => rank(s.stage) < rank(a) ? s.stage : a, "done");
+    return { stage, src };
+  }
+  function latestFact(id) {
+    let best = null;
+    (MD.site || []).forEach(f => {
+      if (f.id !== id) return;
+      if (!best || String(f.date) >= String(best.date)) best = f;
+    });
+    return best;
+  }
   function computeStatuses() {
     const DATA = window.EDIFICE_DATA || {};
     const contracts = {}; (DATA.contracts || []).forEach(c => { contracts[c.id] = c; });
     const floors = DATA.floors || {};
     stageStatus = STAGES.map(st => {
-      const cfg = st.status || {}, src = [];
-      if (cfg.fixed) return { stage: cfg.fixed, src: [], fixed: true };
-      (cfg.contracts || []).forEach(id => {
-        const c = contracts[id];
-        if (c && c.stage) src.push({ kind: "contract", stage: c.stage, label: c.name || id, href: c.href });
-      });
-      if (cfg.lift && DATA.lift && DATA.lift.items) {
-        const hits = DATA.lift.items.filter(it => cfg.lift.indexOf(itemStage(it)) >= 0);
-        hits.forEach(it => src.push({ kind: "lift", stage: itemStage(it), label: it.name }));
-      }
-      (cfg.floors || []).forEach(slug => {
-        const f = floors[slug]; if (!f || !f.items || !f.items.length) return;
-        const cnt = {}; let worst = "done";
-        f.items.forEach(it => { const s = itemStage(it); cnt[s] = (cnt[s] || 0) + 1; if (rank(s) < rank(worst)) worst = s; });
-        src.push({ kind: "floor", stage: worst, label: f.name || slug, count: f.items.length, cnt });
-      });
-      if (!src.length) return { stage: "nodata", src };
-      const stage = src.reduce((a, s) => rank(s.stage) < rank(a) ? s.stage : a, "done");
-      return { stage, src };
+      const est = estimateOf(st, contracts, floors, DATA);
+      const fact = latestFact(st.id);
+      if (!fact) return est;
+      return { stage: fact.stage, src: est.src, fact: fact, estimate: est.stage, fixed: false };
     });
   }
   function nowStage() {
@@ -1064,6 +1079,12 @@
   function statusHtml(k) {
     const ss = stageStatus[k]; if (!ss) return "";
     const pill = `<span class="m-pill" data-st="${ss.stage}">${SL[ss.stage] || ss.stage}</span>`;
+    if (ss.fact) {
+      const words = ss.fact.basis === "words";
+      const when = String(ss.fact.date || "").slice(8, 10) + "." + String(ss.fact.date || "").slice(5, 7);
+      const est = ss.estimate && ss.estimate !== "nodata" ? `<span class="m-pill" data-st="${ss.estimate}">по смете — ${SL[ss.estimate] || ss.estimate}</span>` : "";
+      return `<div class="m-fact${words ? " words" : " ok"}"><b>факт ${esc(when)} · ${words ? "со слов" : "документ"}</b>${esc(ss.fact.text)}</div><div class="m-status">${pill}${est}</div>`;
+    }
     let src = "";
     if (ss.fixed) src = "существующее состояние";
     else if (!ss.src.length) src = "в data.js нет позиций для этого этапа";
