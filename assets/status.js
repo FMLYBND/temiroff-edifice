@@ -2316,21 +2316,21 @@ window.EDIFICE_STATUS = {
     },
     {
       "id": "L3-PER-001",
-      "stage": "counting",
+      "stage": "done",
       "pay": "none",
       "paidAmount": 0,
       "doc": "",
-      "comment": "",
-      "updated": "2026-09-17"
+      "comment": "Перегородки ГКЛ выполнены — со слов 04.10.2026, фото нет",
+      "updated": "2026-10-04"
     },
     {
       "id": "L3-PER-002",
-      "stage": "counting",
+      "stage": "done",
       "pay": "none",
       "paidAmount": 0,
       "doc": "",
-      "comment": "",
-      "updated": "2026-09-17"
+      "comment": "Перегородки ГКЛ выполнены — со слов 04.10.2026, фото нет",
+      "updated": "2026-10-04"
     },
     {
       "id": "L3-PER-003",
