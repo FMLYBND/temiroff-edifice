@@ -243,6 +243,7 @@
   function expSumCls(status) {
     if (status === "paid") return "paid";
     if (status === "debt") return "debt";
+    if (status === "monday") return "est";
     return "est";
   }
 
@@ -554,13 +555,14 @@
   }
 
   function expenseTotals() {
-    var out = { paid: 0, debt: 0, sign: 0, nPaid: 0, nDebt: 0, nSign: 0, items: [] };
+    var out = { paid: 0, debt: 0, sign: 0, monday: 0, nPaid: 0, nDebt: 0, nSign: 0, nMonday: 0, items: [] };
     var list = (EXPENSES && EXPENSES.items) || [];
     list.forEach(function (p) {
       var s = Number(p.sum) || 0;
       if (p.status === "paid") { out.paid += s; out.nPaid += 1; }
       else if (p.status === "debt") { out.debt += s; out.nDebt += 1; }
       else if (p.status === "sign") { out.sign += s; out.nSign += 1; }
+      else if (p.status === "monday") { out.monday += s; out.nMonday += 1; }
     });
     out.items = list.slice().sort(byPriority);
     return out;
@@ -582,6 +584,7 @@
     html += '<div class="kpi kpi-4">';
     html += '<div class="panel"><div class="lbl">В реестре — оплатить</div><div class="num debt">' + money(ex.debt, true) + '</div><div class="sub">' + ex.nDebt + " заявки · " + money(ex.debt) + "</div></div>";
     html += '<div class="panel"><div class="lbl">На подписи — провести</div><div class="num est">' + money(ex.sign, true) + '</div><div class="sub">' + ex.nSign + " заявки · " + money(ex.sign) + "</div></div>";
+    html += '<div class="panel"><div class="lbl">В понедельник</div><div class="num est">' + money(ex.monday, true) + '</div><div class="sub">' + ex.nMonday + " · " + money(ex.monday) + " · 05.10</div></div>";
     html += '<div class="panel"><div class="lbl">Авансы (ждут денег)</div><div class="num est">' + money(adv, true) + '</div><div class="sub">' + esc(advNames.join(", ") || "нет ожидающих") + '</div></div>';
     html += '<div class="panel"><div class="lbl">Уже оплачено</div><div class="num paid">' + money(ex.paid, true) + '</div><div class="sub">' + ex.nPaid + " заявки 1С · " + money(ex.paid) + '</div></div>';
     html += "</div>";
@@ -595,6 +598,11 @@
         html += '<div class="subtle">' + esc(p.num) + (p.doc ? " · " + esc(p.doc) : "") + " · провести раньше остальных</div></div>";
       });
     }
+    ex.items.filter(function (p) { return p.status === "monday" && !p.priority; }).forEach(function (p) {
+      html += '<div class="need"><strong>' + esc(p.name) + "</strong> " + expStatus(p);
+      html += '<div class="num est">' + som(p.sum) + "</div>";
+      html += '<div class="subtle">' + esc(p.num) + " · оплатят в понедельник, 05.10</div></div>";
+    });
     ex.items.filter(function (p) { return p.status === "sign" && !p.priority; }).forEach(function (p) {
       html += '<div class="need"><strong>' + esc(p.name) + "</strong> " + expStatus(p) + prioTag(p);
       html += '<div class="num est">' + som(p.sum) + (p.usd ? " · $" + p.usd.toLocaleString("ru-RU") : "") + "</div>";
@@ -628,6 +636,7 @@
   function expStatus(p) {
     if (p.status === "paid") return pill(PAY, "paid", "pay");
     if (p.status === "debt") return pill(PAY, "debt", "pay");
+    if (p.status === "monday") return '<span class="pill pay-advance"><i></i>в понедельник</span>';
     return pill(PAY, "sign", "pay");
   }
 
@@ -1189,6 +1198,7 @@
     html += '<div class="panel"><div class="lbl">Оплачено</div><div class="num paid">' + money(ex.paid, true) + '</div><div class="sub">' + ex.nPaid + " · " + money(ex.paid) + "</div></div>";
     html += '<div class="panel"><div class="lbl">В долгу</div><div class="num debt">' + money(ex.debt, true) + '</div><div class="sub">' + ex.nDebt + " в реестре</div></div>";
     html += '<div class="panel"><div class="lbl">На подписи</div><div class="num est">' + money(ex.sign, true) + '</div><div class="sub">' + ex.nSign + " · не в долге</div></div>";
+    html += '<div class="panel"><div class="lbl">В понедельник</div><div class="num est">' + money(ex.monday, true) + '</div><div class="sub">' + ex.nMonday + " · 05.10</div></div>";
     html += '<div class="panel"><div class="lbl">Всего заявок</div><div class="num">' + ex.items.length + '</div><div class="sub">срез ' + esc((EXPENSES && EXPENSES.updated) || "") + "</div></div>";
     html += "</div>";
     html += '<div class="chips" id="echips"></div><div id="ebody"></div>';
@@ -1199,6 +1209,7 @@
         ["all", "Все · " + ex.items.length],
         ["prio", "Приоритет · " + ex.items.filter(function (p) { return p.priority; }).length],
         ["sign", "На подписи · " + ex.nSign],
+        ["monday", "В понедельник · " + ex.nMonday],
         ["debt", "В долгу · " + ex.nDebt],
         ["paid", "Оплачено · " + ex.nPaid]
       ];
