@@ -126,6 +126,18 @@
   .lb p{position:absolute;left:0;right:0;bottom:18px;text-align:center;color:#e9e6e0;font:500 13px/1.3 var(--f-body);margin:0;padding:0 16px}
   .lb-x,.lb-a{position:absolute;border:0;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;border-radius:50%;width:42px;height:42px;font:400 26px/1 var(--f-body)}
   .lb-x{top:12px;right:12px} .lb-p{left:10px;top:50%;transform:translateY(-50%)} .lb-n{right:10px;top:50%;transform:translateY(-50%)}
+  .apps{border-top:1px solid var(--line2);padding:10px 0 0;margin:0 0 12px}
+  .apps-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font:500 9.5px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin-bottom:4px}
+  .app{display:grid;grid-template-columns:1fr auto;gap:3px 10px;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line2);font-size:12.5px;line-height:1.4}
+  .app:last-child{border-bottom:0}
+  .app-n{font:500 11px/1.3 var(--f-mono);color:var(--ink2);font-variant-numeric:tabular-nums}
+  .app-s{font:500 12.5px/1.3 var(--f-mono);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .app-s.z{color:var(--ink3)}
+  .app-d{grid-column:1/-1;font-size:11.5px;color:var(--ink2);line-height:1.4}
+  .app .st{justify-self:end}
+  .st.unk{background:transparent;color:var(--ink2);border:1px dashed var(--ink3);padding:3px 5px}
+  .app-g{background:none;border:0;padding:0;font:inherit;color:var(--oxide);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+  .card .apps-n{font-size:11.5px;color:var(--ink2);margin:0 0 10px;line-height:1.4}
   .err{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;font-size:14px;color:var(--ink)}
 
   @media (max-width:1180px){ .tick span{display:none} .ticks{height:18px} }
@@ -184,6 +196,7 @@
     <button type="button" class="tog" id="t-xray" aria-pressed="false">Рентген</button>
     <button type="button" class="tog" id="t-elev" aria-pressed="true">Отметки</button>
     <button type="button" class="tog" id="t-ctx" aria-pressed="true">Соседи</button>
+    <button type="button" class="tog" id="t-apps" aria-pressed="false" title="Заявки QTSK по офису в Навои, реестр на 04.10">Заявки</button>
   </nav>
 
   <aside class="card" id="card" aria-live="polite"></aside>
@@ -282,6 +295,24 @@ const STAGES = [
    facts:[['Цоколь','−0.600 → ±0.000','чертёж'],['Озеленение','≥ 30 %','экозакл.'],['Тёплый пол −1','проект','ТЗ 02.10']],
    assume:['Душевые на −1: к трапу нужен уклон, значит стяжка, а не наливной пол.','Подрозетники терморегуляторов и гофры датчиков — до окраски и настенной плитки.']}
 ];
+/* ============ ЗАЯВКИ QTSK · офис в Навои ============
+   Реестр заявок, фильтр «Мухаматов», срез на 04.10.2026. Отменённые (2026-0217) не показываем.
+   Даты 0521 и 0284 — из assets/expenses.js; где даты нет — «—». Сумма 0 = в реестре 0, не оценена.
+   st: sign — на подписи, supply — у снабжения, paid — оплачена, unk — не проверено. stages — s.short этапов. */
+const APPS_DATE = '04.10';
+const APPS = [
+  {num:'2026-0607', date:'02.10', name:'Аванс на фибробетон и вентиляцию', sum:'26 700 000', st:'sign', stages:['Вент.','Фибро']},
+  {num:'2026-0613', date:'02.10', name:'Металлопрокат для лифта и шахты', sum:'0', st:'supply', stages:['Лифт'],
+   det:'Профили 120×120×6 — 120 м, 120×120×4 — 132 м, 80×80×4 — 72 м; листы t = 20 — 0,6 м², t = 10 — 1 м².'},
+  {num:'2026-0615', date:'02.10', name:'Крепёжные анкера и расходники для лифта', sum:'0', st:'supply', stages:['Лифт'],
+   det:'Анкер M20 Hilti — 18 шт., анкер M16 — 36 шт., бур M20 ⌀24 — 1 шт., бур M16 ⌀18 — 2 шт., химсостав — 3 картриджа по 500 мл.'},
+  {num:'2026-0601', date:'—', name:'Расходники для фибробетона', sum:'540 000', st:'sign', stages:['Фибро']},
+  {num:'2026-0521', date:'28.09', name:'Краска и валик для покраски шахты лифта', sum:'870 000', st:'sign', stages:['Лифт']},
+  {num:'2026-0284', date:'11.09', name:'Предоплата за фасадные работы из фибробетона', sum:'5 000 $', st:'paid', stages:['Фибро']},
+  {num:'—', date:'—', name:'ГКЛ для монтажа лестничного помещения, 11 позиций', sum:'—', st:'unk', stages:['ГКЛ'],
+   det:'Начата 26.09. Номер не известен, отправку и статус в реестре не проверял.'}
+];
+const APP_ST = {sign:['progress','на подписи'], supply:['wait','у снабжения'], paid:['done','оплачена'], unk:['unk','не проверено']};
 const N = STAGES.length - 1;
 const T_NOW = 4.45;   // факт на 04.10: идёт вентиляция
 
@@ -1059,6 +1090,7 @@ const cardEl=document.getElementById('card'), scrub=document.getElementById('scr
       ticksEl=document.getElementById('ticks'), clockEl=document.getElementById('clock'), nowBtn=document.getElementById('now');
 const ICON_PLAY='<svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z"/></svg>', ICON_PAUSE='<svg viewBox="0 0 16 16"><path d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z"/></svg>';
 const ST_LABEL={done:'сделано',progress:'идёт',wait:'впереди',risk:'блокер'};
+let appsOn=false;
 let t=N, playing=false, tTarget=null, shownK=-1, lastApplied=-1, xray=false, showElev=true, preset='salon';
 STAGES.forEach((s,k)=>{ const b=document.createElement('button'); b.type='button'; b.className='tick'; b.style.left=(k/N*100)+'%';
   b.innerHTML=`<b>${String(k).padStart(2,'0')}</b><span>${s.short}</span>`; b.setAttribute('aria-label',`Этап ${k}: ${s.name}`);
@@ -1107,15 +1139,37 @@ function bindTool(){
   on('t-col',v=>{ P.col=+v; build(); drawTool(); });
   drawTool();
 }
+function appHTML(a,withStage){
+  const st=APP_ST[a.st], ks=withStage?a.stages.map(sh=>STAGES.findIndex(x=>x.short===sh)).filter(i=>i>=0):[];
+  return `<div class="app"><span class="app-n">${a.num} · ${a.date}</span><span class="st ${st[0]}">${st[1]}</span>
+    <span>${a.name}</span><span class="app-s${a.sum==='0'?' z':''}">${a.sum==='0'?'0 · не оценена':a.sum}</span>
+    ${a.det?`<span class="app-d">${a.det}</span>`:''}
+    ${ks.length?`<span class="app-d">этап ${ks.map(i=>`<button type="button" class="app-g" data-go="${i}">${String(i).padStart(2,'0')} ${STAGES[i].short}</button>`).join(', ')}</span>`:''}</div>`;
+}
+function appsSummaryHTML(){
+  const cnt=st=>APPS.filter(a=>a.st===st).length;
+  const sumSign=APPS.filter(a=>a.st==='sign').reduce((m,a)=>m+(+a.sum.replace(/\D/g,'')||0),0).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+  return `<div class="eyebrow"><b>QTSK</b><span>заявки · офис, Навои</span></div>
+    <h2>Заявки по объекту</h2><p>Заявки Мухаматова Т.Б. по офису в Навои, по реестру на ${APPS_DATE}. Отменённые не показаны.</p>
+    <dl class="facts"><dt>На подписи · ${cnt('sign')}</dt><dd>${sumSign}</dd><span class="src">сум</span>
+      <dt>У снабжения · ${cnt('supply')}</dt><dd>0</dd><span class="src">не оценены</span>
+      <dt>Оплачено · ${cnt('paid')}</dt><dd>5 000</dd><span class="src">$</span>
+      <dt>Не проверено · ${cnt('unk')}</dt><dd>—</dd><span class="src src-w">реестр</span></dl>
+    <div class="apps"><div class="apps-h"><span>все заявки</span><span>по реестру на ${APPS_DATE}</span></div>${APPS.map(a=>appHTML(a,true)).join('')}</div>
+    <p class="apps-n">Свежие статусы — после входа в реестр. Кнопка «Заявки» наверху возвращает карточку этапа.</p>`;
+}
+function bindApps(){ cardEl.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{ setApps(false); playing=false; tTarget=+b.dataset.go; updPlay(); })); }
 function renderCard(k){
-  const s=STAGES[k], A=s.assume?[].concat(s.assume):[];
+  const s=STAGES[k], A=s.assume?[].concat(s.assume):[], AP=APPS.filter(a=>a.stages.includes(s.short));
+  tickEls.forEach((el,i)=>el.classList.toggle('on',i===k));
+  if(appsOn){ cardEl.innerHTML=appsSummaryHTML(); bindApps(); return; }
   cardEl.innerHTML=`<div class="eyebrow"><b>${String(k).padStart(2,'0')}</b><span>этап из ${String(N).padStart(2,'0')}</span></div>
     <h2>${s.name}</h2><div class="bar"><i id="bar"></i></div><p>${s.text}</p>
     ${s.status?`<div class="fact"><span class="st ${s.status[0]}">${ST_LABEL[s.status[0]]}</span><span>${s.status[1]}</span></div>`:''}
     ${s.facts&&s.facts.length?`<dl class="facts">${s.facts.map(f=>`<dt>${f[0]}</dt><dd>${f[1]}</dd><span class="src${srcCls(f[2])}">${f[2]}</span>`).join('')}</dl>`:''}
+    ${AP.length?`<div class="apps"><div class="apps-h"><span>заявки QTSK</span><span>по реестру на ${APPS_DATE}</span></div>${AP.map(a=>appHTML(a,false)).join('')}</div>`:''}
     ${s.tool?toolHTML():''}
     ${A.length?`<div class="assume"><span>проверить</span>${A.length>1?`<ol>${A.map(a=>`<li>${a}</li>`).join('')}</ol>`:A[0]}</div>`:''}`;
-  tickEls.forEach((el,i)=>el.classList.toggle('on',i===k));
   if(s.tool) bindTool();
 }
 function updUI(){
@@ -1150,6 +1204,9 @@ function setXray(on){ xray=on; tX.setAttribute('aria-pressed',String(xray));
   setGroundGhost(xray || cut==='-1');
 }
 tX.addEventListener('click',()=>setXray(!xray));
+const tApps=document.getElementById('t-apps');
+function setApps(on){ appsOn=on; tApps.setAttribute('aria-pressed',String(on)); shownK=-1; cardEl.scrollTop=0; }
+tApps.addEventListener('click',()=>setApps(!appsOn));
 addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'){ if(e.code!=='Space'||e.target.tagName==='SELECT') return; }
   if(e.code==='Space'){ e.preventDefault(); playBtn.click(); }
