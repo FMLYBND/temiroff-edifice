@@ -332,6 +332,10 @@ const STOPS = [0, 3.6, 6.9, 10.2];        // остановки по КЖ, не 
 const PI = Math.PI, V3 = THREE.Vector3;
 const W = 13.7, D = 16.3, TOP = 10.3, RC = 1.3, LB = -3.2;
 const CX = RC, CZ = -RC;
+// план 2–3 этажей по STL (конструктивная линия): углы фасадов скруглены R1.0, фасад 1 от x=XS утоплен на SB
+const CR = 1.0, SB = .3, XS = 4.7;
+const PX = CR, PZ = -CR;            // центр угла фасадов 1 / 2
+const QX = W-CR, QZ = -SB-CR;       // центр угла фасад 1 / сосед
 const zr = yr => -D + yr;
 const canvas = document.getElementById('scene');
 const mobile = matchMedia('(max-width:760px)').matches;
@@ -495,7 +499,7 @@ function arcAt(cx,cz,r,y0,y1,t0,tl,m,parent=ROOT,seg=28){
   const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,y1-y0,seg,1,true,t0,tl),m);
   o.position.set(cx,(y0+y1)/2,cz); parent.add(o); return o;
 }
-const arcCyl=(r,y0,y1,m,parent=ROOT,seg=28)=>arcAt(CX,CZ,r,y0,y1,-PI/2,PI/2,m,parent,seg);
+const arcCyl=(r,y0,y1,m,parent=ROOT,seg=28)=>arcAt(PX,PZ,r,y0,y1,-PI/2,PI/2,m,parent,seg);
 function pane(G,x0,y0,x1,y1,lz=-.12,m=mat.glass){ const o=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,y1-y0),m); o.position.set((x0+x1)/2,(y0+y1)/2,lz); G.add(o); return o; }
 function mul(G,x0,y0,x1,y1,lz=-.1,d=.07){ return bx(x0,y0,lz-d/2,x1,y1,lz+d/2,mat.frame,G,false); }
 // стенка-отрезок в плане: (x0,yr0)→(x1,yr1), толщина t, высота y0…y1
@@ -525,19 +529,24 @@ function hU1(x0){
   const p=new THREE.Shape(); p.moveTo(x0,3.6); p.lineTo(3.12,3.6); p.absellipse(3.12,4.08,.48,.48,-PI/2,0,false);
   p.lineTo(3.6,7.2); p.quadraticCurveTo(3.64,9.0,3.9,9.72); p.quadraticCurveTo(4.0,10.1,3.3,10.1); p.lineTo(x0,10.1); p.lineTo(x0,3.6); return p;
 }
+// фасад 1 выше консоли — две части: до x=4.9 по линии z=0, дальше утоплена на SB (STL); стык — по верху второй «U»
 function frontUpper(){
-  const s=new THREE.Shape(); s.moveTo(RC,2.9); s.lineTo(W,2.9); s.lineTo(W,TOP); s.lineTo(RC,TOP); s.lineTo(RC,10.1); s.lineTo(3.3,10.1);
+  const s=new THREE.Shape(); s.moveTo(CR,2.9); s.lineTo(4.9,2.9); s.lineTo(4.9,3.6); s.lineTo(4.35,3.6); s.absellipse(4.35,4.05,.45,.45,1.5*PI,PI,true);
+  s.lineTo(3.9,7.2); s.bezierCurveTo(3.9,8.6,4.25,10.1,4.9,10.1); s.lineTo(4.9,TOP); s.lineTo(CR,TOP); s.lineTo(CR,10.1); s.lineTo(3.3,10.1);
   s.quadraticCurveTo(4.0,10.1,3.9,9.72); s.quadraticCurveTo(3.64,9.0,3.6,7.2); s.lineTo(3.6,4.08);
-  s.absellipse(3.12,4.08,.48,.48,0,-PI/2,true); s.lineTo(RC,3.6); s.lineTo(RC,2.9);
-  const u2=new THREE.Path(); u2.moveTo(4.35,3.6); u2.lineTo(11.82,3.6); u2.lineTo(11.82,10.1); u2.lineTo(4.9,10.1);
-  u2.bezierCurveTo(4.25,10.1,3.9,8.6,3.9,7.2); u2.lineTo(3.9,4.05); u2.absellipse(4.35,4.05,.45,.45,PI,1.5*PI,false);
-  s.holes.push(u2, rr(12.22,3.6,13.6,6.5), rr(12.22,7.2,13.6,10.1));
+  s.absellipse(3.12,4.08,.48,.48,0,-PI/2,true); s.lineTo(CR,3.6); s.lineTo(CR,2.9);
+  return s;
+}
+function frontUpperR(){   // окна у соседа (x 12.22…) уходят за скругление угла
+  const s=new THREE.Shape(); s.moveTo(4.9,2.9); s.lineTo(QX,2.9); s.lineTo(QX,3.6); s.lineTo(12.22,3.6); s.lineTo(12.22,6.5); s.lineTo(QX,6.5);
+  s.lineTo(QX,7.2); s.lineTo(12.22,7.2); s.lineTo(12.22,10.1); s.lineTo(QX,10.1); s.lineTo(QX,TOP); s.lineTo(4.9,TOP);
+  s.lineTo(4.9,10.1); s.lineTo(11.82,10.1); s.lineTo(11.82,3.6); s.lineTo(4.9,3.6); s.lineTo(4.9,2.9);
   return s;
 }
 function frontGround(){ const s=new THREE.Shape(); s.moveTo(RC,0); notch(s,1.72,4.31); notch(s,4.73,7.27); notch(s,7.7,13.28); s.lineTo(W,0); s.lineTo(W,3.0); s.lineTo(RC,3.0); s.lineTo(RC,0); return s; }
-const SE = D-RC;
+const SE = D-RC, SEU = D-CR;   // конец фасада 2: у 1 этажа (консоль) и у 2–3 этажей (начало скругления)
 function sideUpper(){
-  const s=new THREE.Shape(); s.moveTo(0,2.9); s.lineTo(SE,2.9); s.lineTo(SE,3.6); s.lineTo(13.1,3.6); s.lineTo(13.1,10.1); s.lineTo(SE,10.1); s.lineTo(SE,TOP); s.lineTo(0,TOP); s.lineTo(0,2.9);
+  const s=new THREE.Shape(); s.moveTo(0,2.9); s.lineTo(SEU,2.9); s.lineTo(SEU,3.6); s.lineTo(13.1,3.6); s.lineTo(13.1,10.1); s.lineTo(SEU,10.1); s.lineTo(SEU,TOP); s.lineTo(0,TOP); s.lineTo(0,2.9);
   s.holes.push(rr(.1,3.6,1.9,6.5), rr(.1,7.2,1.9,10.1), rr(2.97,3.6,3.95,6.5), rr(2.97,7.2,3.95,10.1),
     rr(4.97,3.6,5.96,6.5,[0,[.95,.8],0,0]), rr(4.97,7.2,5.96,10.1,[0,0,[.95,2.0],0]),
     rr(9.06,3.6,10.05,6.5,[[.95,.8],0,0,0]), rr(9.06,7.2,10.05,10.1,[0,0,0,[.95,2.0]]),
@@ -686,17 +695,24 @@ function build(){
   function slabWithShaft(shape,y0,y1){ shape.holes.push(shaftHole()); xr(slab(shape,y0,y1,mat.concrete),.4);
     stripPieces.push(bx(sX0+.01,y0,zr(sY1)+.005,sX1-.01,y1,zr(sY0)-.005,mat.cut)); }
   const gf=new THREE.Shape(); rr(RC,RC,W,D,[0,0,0,0],gf); slabWithShaft(gf,-.3,0);       // пол 1 этажа (над подвалом)
-  slabWithShaft(planShape(.25,.25,W-.3,D-.3,1.05,0),L1-.3,L1);
-  slabWithShaft(planShape(.25,.25,W-.3,D-.3,1.05,0),L2-.3,L2);
-  // угол консоли: сейчас плиты прямоугольные; на этапе 09 бетон срезается по радиусу (центр — угол 1 этажа)
-  const cornerCut=(y0,y1,d)=>{ const r=1.05, sh=new THREE.Shape(); sh.moveTo(.25,.25); sh.lineTo(.25+r,.25); sh.absarc(.25+r,.25+r,r,-PI/2,-PI,true); sh.lineTo(.25,.25);
-    reg(xr(slab(sh,y0,y1,mat.concrete),.4),9,{mode:'remove',off:new V3(-.6,-2.5,.6),delay:d,dur:.18}); };
+  // край плит 2–3 этажей и кровли: x .25 … W−.3, от фасада 1 .25; углы — концентрично скруглениям STL (центры PX/PZ и QX/QZ)
+  const rL=CR-.25, rRx=W-.3-QX, rRy=SB+CR-.25;
+  const oldPlan=()=>planShape(.25,.25,W-.3,D-.3,rL,[rRx,rRy]);
+  slabWithShaft(oldPlan(),L1-.3,L1);
+  slabWithShaft(oldPlan(),L2-.3,L2);
+  // углы консоли: сейчас плиты прямоугольные; на этапе 09 бетон срезается по радиусу (оба угла фасада 1)
+  const cornerCut=(y0,y1,d)=>{ const sh=new THREE.Shape(); sh.moveTo(.25,.25); sh.lineTo(.25+rL,.25); sh.absarc(.25+rL,.25+rL,rL,-PI/2,-PI,true); sh.lineTo(.25,.25);
+    reg(xr(slab(sh,y0,y1,mat.concrete),.4),9,{mode:'remove',off:new V3(-.6,-2.5,.6),delay:d,dur:.18});
+    const sr=new THREE.Shape(); sr.moveTo(W-.3,.25); sr.lineTo(W-.3,.25+rRy); sr.absellipse(QX,.25+rRy,rRx,rRy,0,-PI/2,true); sr.lineTo(W-.3,.25);
+    reg(xr(slab(sr,y0,y1,mat.concrete),.4),9,{mode:'remove',off:new V3(.6,-2.5,.6),delay:d+.04,dur:.18}); };
   cornerCut(L1-.3,L1,0); cornerCut(L2-.3,L2,.03);
   // колонны: оси x 1.5 / 7.5 / 13.3, ряды yr 6.2 / 8.8 / 14.8; промежуточная x 4.3 в рядах 8.8 и 14.8
   const c=P.col/2;
   [[1.5,6.2],[7.5,6.2],[13.3,6.2],[1.5,8.8],[4.3,8.8],[7.5,8.8],[13.3,8.8],[1.5,14.8],[4.3,14.8],[7.5,14.8],[13.3,14.8]]
     .forEach(([x,yr])=>{ const z=zr(yr); xr(bx(x-c,LB,z-c,x+c,RT-.3,z+c,mat.concrete),.4); });
-  shell(bx(W-.3,-.3,-D,W,LT,0,mat.wallBC));
+  shell(bx(W-.3,-.3,-D,W,LT,QZ,mat.wallBC));
+  // торец стены у соседа: в STL стена кончается на z −1.3 (начало скругления), снимается вместе со срезом углов
+  reg(shell(bx(W-.3,-.3,QZ,W,LT,0,mat.wallBC)),9,{mode:'remove',off:new V3(.6,-2.5,.6),delay:.1,dur:.18});
   shell(bx(0,-.3,-D,W-.3,LT,-D+.3,mat.wallBC));
   // стены старой шахты t=300: проёмы 2200×2000 в стенах вдоль фасада 1 (на стороне Б — 2 и 3 этажи + условный на 1-м, на стороне А — 1 этаж);
   // со стороны расширения стена срезана полосой 2200×250 на каждом этаже (оранжевое — снимается на этапе 02)
@@ -717,7 +733,7 @@ function build(){
     pcs.forEach((p,i)=>reg(p,2,{mode:'remove',off:new V3(0,-.2,0),delay:.12+i*.04,dur:.2}));
     cutp.forEach((p,i)=>reg(p,2,{mode:'remove',off:new V3(0,-.3,0),delay:.82+i*.03,dur:.15})); })();
   // покрытие с проёмом под шахту; над шахтой три плиты ПК 6,0 × 1,0
-  (function(){ const y0=RT-.3, y1=RT, roof=planShape(.25,.25,W-.3,D-.3,1.05,0);
+  (function(){ const y0=RT-.3, y1=RT, roof=oldPlan();
     roof.holes.push(rr(1.5,D-9.0,7.5,D-6.0)); xr(slab(roof,y0,y1,mat.concrete),.4); cornerCut(y0,y1,.06);
     [7.0,6.0,8.0].forEach((a,i)=>reg(bx(1.51,y0,zr(a)+.01,7.49,y1,zr(a+1)-.01,mat.concrete),2,{mode:'remove',off:new V3(0,4.2,0),delay:.45+i*.12,dur:.28}));
     reg(pivotBox(.25,RT,-D+.3,W-.3,RT+.15,-.25,mat.oldScreed,'x'),2,{mode:'ungrow',axis:'x',delay:0,dur:.3});
@@ -880,23 +896,28 @@ function build(){
     reg(gl,11,{mode:'rise',delay:.35,dur:.4});
     // ограждение: чёрный поручень на стойках по краю открытой террасы
     const rl=group(G), post=(x,z)=>bx(x-.025,LT,z-.025,x+.025,LT+1.1,z+.025,mat.frame,rl,false), rail=(x0,z0,x1,z1)=>bx(x0,LT+1.06,z0,x1,LT+1.1,z1,mat.frame,rl,false);
-    const ex=-.05, ez=.05;
-    rail(RC,ez-.02,W-.1,ez+.02); for(let x=RC;x<W;x+=1.5) post(x,ez);
-    rail(ex-.02,-D+.3,ex+.02,-RC); for(let z=-D+.3;z<-RC;z+=1.5) post(ex,z);
-    rail(0,-D+.3,AI.xWC,-D+.34); rail(W-.12,zr(AI.yrN),W-.08,ez);
-    for(let k=0;k<=6;k++){ const a=-PI/2+k/6*PI/2; post(CX+(RC+.05)*Math.sin(a),CZ+(RC+.05)*Math.cos(a)); }
-    { const tr=new THREE.Mesh(new THREE.TorusGeometry(RC+.05,.02,6,24,PI/2),mat.frame); tr.rotation.x=PI/2; const tg2=new THREE.Group(); tg2.add(tr); tg2.rotation.y=-PI/2; tg2.position.set(CX,LT+1.08,CZ); rl.add(tg2); }
+    // край плиты по STL: угол R1.0, уступ фасада 1 на SB от x=XS, скруглённый угол у соседа (поручень у соседа по x=W−.1)
+    const ex=-.05, ez=.05, xs=XS+.05, ez2=ez-SB, rq=CR+.05, qx=W-.1-rq;
+    rail(CR,ez-.02,xs,ez+.02); rail(xs-.02,ez2,xs+.02,ez); rail(xs,ez2-.02,qx,ez2+.02);
+    for(let x=CR;x<XS;x+=1.5) post(x,ez); post(xs,ez); post(xs,ez2); for(let x=XS+1.6;x<qx;x+=1.5) post(x,ez2);
+    rail(ex-.02,-D+.3,ex+.02,-CR); for(let z=-D+.3;z<-CR;z+=1.5) post(ex,z);
+    rail(0,-D+.3,AI.xWC,-D+.34); rail(W-.12,zr(AI.yrN),W-.08,QZ);
+    for(let k=0;k<=6;k++){ const a=-PI/2+k/6*PI/2; post(PX+rq*Math.sin(a),PZ+rq*Math.cos(a)); post(qx+rq*Math.sin(a+PI/2),QZ+rq*Math.cos(a+PI/2)); }
+    [[PX,PZ,-PI/2],[qx,QZ,0]].forEach(([cx,cz,ry])=>{ const tr=new THREE.Mesh(new THREE.TorusGeometry(rq,.02,6,24,PI/2),mat.frame); tr.rotation.x=PI/2; const tg2=new THREE.Group(); tg2.add(tr); tg2.rotation.y=ry; tg2.position.set(cx,LT+1.08,cz); rl.add(tg2); });
     reg(rl,11,{mode:'rise',delay:.6,dur:.35});
     const fu=group(G);
     // настил из доски по открытой части
     const dk=M({map:(()=>{ const [c,g]=cv(64,256); g.fillStyle='#8a6a4f'; g.fillRect(0,0,64,256); g.fillStyle='#d8c6ae'; for(let y=0;y<256;y+=32) g.fillRect(0,y,64,2); return tex(c,1,1); })(),roughness:.85});
     const deck=(x0,yr0,x1,yr1)=>{ const m=dk.clone(); m.map=dk.map.clone(); m.map.needsUpdate=true; m.map.repeat.set((x1-x0)/.6,(yr1-yr0)/.6); bx(x0,LT,zr(yr0),x1,LT+.03,zr(yr1),m,fu,false); };
-    deck(.15,14.5,W-.3,16.15); deck(.15,.35,AI.xl,14.5); deck(AI.xl,.35,AI.xWC,AI.yrT); deck(AI.xN,AI.yrN,W-.3,14.5);
+    { const s=new THREE.Shape(), y1=D-14.5, f=.15, m=dk.clone(); m.map=dk.map.clone(); m.map.needsUpdate=true; m.map.repeat.set(1/.6,1/.6);   // полоса вдоль фасада 1 — по контуру ограждения, отступ .2
+      s.moveTo(f,y1); s.lineTo(f,CR); s.absarc(CR,CR,rq-.2,PI,1.5*PI,false); s.lineTo(XS,f); s.lineTo(XS,f+SB); s.lineTo(qx,f+SB); s.absarc(qx,-QZ,rq-.2,1.5*PI,2*PI,false); s.lineTo(W-.3,y1); s.lineTo(f,y1);
+      slab(s,LT,LT+.03,m,fu).castShadow=false; }
+    deck(.15,.35,AI.xl,14.5); deck(AI.xl,.35,AI.xWC,AI.yrT); deck(AI.xN,AI.yrN,W-.3,14.5);
     // кашпо из кортена с самшитом вдоль края, как на рендере «Открытая терраса»
     const corten=M({color:0x7a4a32,roughness:.7,metalness:.3});
     const planter=(x0,z0,x1,z1)=>{ bx(x0,LT,z0,x1,LT+.7,z1,corten,fu); const L=Math.max(Math.abs(x1-x0),Math.abs(z1-z0)), n=Math.max(1,Math.round(L/.55));
       for(let k=0;k<n;k++){ const f=(k+.5)/n, b=new THREE.Mesh(new THREE.IcosahedronGeometry(.3,1),mat.green); b.scale.set(1,.75,1); b.position.set(x0+(x1-x0)*f,LT+.88,z0+(z1-z0)*f); b.castShadow=true; fu.add(b); } };
-    planter(2.2,-.42,9.4,-.12); planter(.12,-13.6,.42,-2.4); planter(11.8,-.42,13.3,-.12);
+    planter(2.2,-.42,4.5,-.12); planter(5.0,-.42-SB,9.4,-.12-SB); planter(.12,-13.6,.42,-2.4); planter(11.2,-.42-SB,12.5,-.12-SB);
     // кресла у края (рендер «Терраса, кресло») и лежаки у тыла
     const chair=(x,z,ry)=>{ const c=group(fu); c.position.set(x,LT,z); c.rotation.y=ry; bx(-.38,0,-.36,.38,.42,.36,mat.wood,c); bx(-.32,.42,-.3,.32,.55,.3,mat.beige,c); bx(-.38,.42,.24,.38,.95,.36,mat.wood,c); bx(-.3,.55,.12,.3,.85,.24,mat.beige,c); };
     chair(10.6,-.95,PI); chair(12.2,-1.0,PI+.3); chair(.95,-8.2,-PI/2);
@@ -925,16 +946,21 @@ function build(){
     for(let i=0;i<=6;i++){ const x=.31+i*8.66/6; bx(x-.035,LT,-5.34,x+.035,13.3,-5.26,mat.frame,g,false); }
     for(let i=0;i<=7;i++){ const z=-5.27-i*11.03/7; bx(8.93,LT,z-.035,9.01,13.3,z+.035,mat.frame,g,false); }
     reg(g,11,{mode:'rise',delay:.35,dur:.4});
-    const rl=group(G); bx(RC,LT,.08,W,LT+1.1,.1,mat.railing,rl,false); bx(-.1,LT,-5.27,-.08,LT+1.1,-RC,mat.railing,rl,false);
-    bx(W-.1,LT,-D,W-.08,LT+1.1,.1,mat.railing,rl,false); arcCyl(RC+.09,LT,LT+1.1,mat.railing,rl,32); reg(rl,11,{mode:'rise',delay:.6,dur:.35});
+    const rl=group(G), rq=CR+.09, qx=W-.09-rq, xg=XS+.09;
+    bx(CR,LT,.08,xg,LT+1.1,.1,mat.railing,rl,false); bx(xg-.01,LT,.08-SB,xg+.01,LT+1.1,.1,mat.railing,rl,false); bx(xg,LT,.08-SB,qx,LT+1.1,.1-SB,mat.railing,rl,false);
+    bx(-.1,LT,-5.27,-.08,LT+1.1,-CR,mat.railing,rl,false); bx(W-.1,LT,-D,W-.08,LT+1.1,QZ,mat.railing,rl,false);
+    arcCyl(rq,LT,LT+1.1,mat.railing,rl,32); arcAt(qx,QZ,rq,LT,LT+1.1,0,PI/2,mat.railing,rl,32); reg(rl,11,{mode:'rise',delay:.6,dur:.35});
   })();
-  reg(pivotBox(.25,RT,-D+.3,W-.3,LT,-.25,mat.screed,'x'),8,{mode:'grow',axis:'x',delay:0,dur:.3});
+  reg(slab(oldPlan(),RT,LT,mat.screed),8,{mode:'grow',axis:'x',delay:0,dur:.3});   // по контуру плиты, со скруглёнными углами
 
   /* ---- 09–10 · армокаркас и фибробетон ---- */
   const skin=(G,shape,lz,d1,d2)=>{ const cg=new THREE.Mesh(new THREE.ShapeGeometry(shape,28),mat.cage); cg.position.z=lz+.13; G.add(cg); reg(cg,9,{mode:'rise',delay:d1,dur:.45});
     const m=new THREE.Mesh(new THREE.ExtrudeGeometry(shape,EXT),mat.fibro); m.position.z=lz+.06; m.castShadow=true; m.receiveShadow=true; G.add(m); shell(m); reg(m,10,{mode:'rise',delay:d2,dur:.5}); };
-  skin(frontG,frontGround(),-RC,0,0); skin(sideG,sideGround(),-RC,.05,.05); skin(frontG,frontUpper(),0,.1,.12); skin(sideG,sideUpper(),0,.15,.18);
-  { const o=new THREE.Mesh(new THREE.ExtrudeGeometry(hU1(RC),{depth:.05,bevelEnabled:false,curveSegments:24}),mat.plaster); o.position.z=-.02; o.receiveShadow=true; frontG.add(o); shell(o); reg(o,10,{mode:'rise',delay:.15,dur:.45}); }
+  skin(frontG,frontGround(),-RC,0,0); skin(sideG,sideGround(),-RC,.05,.05); skin(frontG,frontUpper(),0,.1,.12); skin(frontG,frontUpperR(),-SB,.1,.12); skin(sideG,sideUpper(),0,.15,.18);
+  // угол у соседа: простенок между окнами 6.5…7.2 по дуге (пояса 2.9 и 10.1 закрывают остальное)
+  { const s=new THREE.Shape(), cy=-QZ; s.moveTo(QX,cy-CR); s.absarc(QX,cy,CR,-PI/2,0,false); s.lineTo(QX+CR+.27,cy); s.absarc(QX,cy,CR+.27,0,-PI/2,true); s.lineTo(QX,cy-CR);
+    const o=slab(s,6.5,7.2,mat.fibro); shell(o); reg(o,10,{mode:'rise',delay:.14,dur:.45}); }
+  { const o=new THREE.Mesh(new THREE.ExtrudeGeometry(hU1(CR),{depth:.05,bevelEnabled:false,curveSegments:24}),mat.plaster); o.position.z=-.02; o.receiveShadow=true; frontG.add(o); shell(o); reg(o,10,{mode:'rise',delay:.15,dur:.45}); }
   { const fs=flareShape(), g=group();
     [[1.3,1.72],[4.31,4.73],[7.27,7.7],[13.28,13.7]].forEach(([a,b])=>{ const m=new THREE.Mesh(new THREE.ExtrudeGeometry(fs,{depth:b-a,bevelEnabled:false,curveSegments:20}),mat.fibro); m.rotation.y=-PI/2; m.position.set(b,0,-RC+.27); m.castShadow=true; g.add(m); });
     { const m=new THREE.Mesh(new THREE.ExtrudeGeometry(fs,{depth:SE-13.77,bevelEnabled:false,curveSegments:20}),mat.fibro); m.rotation.y=PI; m.position.set(RC-.27,0,zr(SE)); m.castShadow=true; g.add(m); }
@@ -952,30 +978,40 @@ function build(){
     [c2.getPoint(0),c2.getPoint(1)].forEach(p=>{ const s=new THREE.Mesh(new THREE.SphereGeometry(.2,16,12),mat.fibro); s.position.set(p.x,p.y,.22); tg.add(s); });
     reg(shell(tg),10,{mode:'rise',delay:.35+i*.05,dur:.45}); });
   // пояса только по фасадам 1 и 2: на тыльной стороне и к соседу справа фибробетона нет
-  const bandShape=(wB)=>{ const s=new THREE.Shape(); s.moveTo(0,D); s.lineTo(0,RC); s.absarc(RC,RC,RC,PI,1.5*PI,false); s.lineTo(W,0); s.lineTo(W,wB);
-    if(wB<RC){ s.lineTo(RC,wB); s.absarc(RC,RC,RC-wB,1.5*PI,PI,true); s.lineTo(wB,D); } else { s.lineTo(wB,wB); s.lineTo(wB,D); }
+  // контур — конструктивная линия по STL: угол R CR, уступ фасада 1 на SB от x=XS, скругление у соседа (там пояс и кончается)
+  const bandShape=(wB)=>{ const s=new THREE.Shape(), qy=-QZ; s.moveTo(0,D); s.lineTo(0,CR); s.absarc(CR,CR,CR,PI,1.5*PI,false);
+    s.lineTo(XS,0); s.lineTo(XS,SB); s.lineTo(QX,SB); s.absarc(QX,qy,CR,1.5*PI,2*PI,false);
+    if(wB<CR){ s.lineTo(W-wB,qy); s.absarc(QX,qy,CR-wB,0,-PI/2,true); s.lineTo(XS,SB+wB); s.lineTo(XS,wB); s.lineTo(CR,wB); s.absarc(CR,CR,CR-wB,1.5*PI,PI,true); s.lineTo(wB,D); }
+    else { s.lineTo(W,SB+wB); s.lineTo(XS,SB+wB); s.lineTo(XS,wB); s.lineTo(wB,wB); s.lineTo(wB,D); }
     s.lineTo(0,D); return s; };
   [[2.9,.7,.57,.3,1.6],[10.1,.4,.49,.45,.45],[10.58,.22,.39,.55,.45]].forEach(([y,h,out,d,wB])=>{ const sh=bandShape(wB);
     reg(belt(sh,y+.03,h-.06,out-.06,mat.cage),9,{mode:'rise',delay:.4+d*.3,dur:.3,until:10}); reg(shell(belt(sh,y,h,out,mat.fibro)),10,{mode:'rise',delay:d,dur:.3}); });
 
   /* ---- 11 · витражи 2–3 этажей ---- */
-  { const g=group(frontG); pane(g,RC,3.6,W-.05,10.1); bx(RC,6.55,-.16,12.0,7.15,-.1,mat.slabEdge,g,false); mul(g,RC,3.6,W-.05,3.66); mul(g,RC,10.04,W-.05,10.1);
-    [4.63,6.07,7.51,8.95,10.4,11.82,12.91].forEach(x=>mul(g,x-.03,3.6,x+.03,10.1)); reg(g,11,{mode:'rise',delay:.05,dur:.5}); }
-  { const g=group(sideG); pane(g,.05,3.6,SE,10.1); bx(.05,6.55,-.16,SE,7.15,-.1,mat.slabEdge,g,false); mul(g,.05,3.6,SE,3.66); mul(g,.05,10.04,SE,10.1);
+  { const g=group(frontG), xa=4.9, zb=-SB;   // за уступом фасада 1 витраж глубже на SB
+    pane(g,CR,3.6,xa,10.1); pane(g,xa,3.6,QX,10.1,zb-.12); bx(CR,6.55,-.16,xa,7.15,-.1,mat.slabEdge,g,false); bx(xa,6.55,zb-.16,12.0,7.15,zb-.1,mat.slabEdge,g,false);
+    [[CR,xa,0],[xa,QX,zb]].forEach(([a,b,z])=>{ mul(g,a,3.6,b,3.66,z-.1); mul(g,a,10.04,b,10.1,z-.1); });
+    bx(xa-.03,3.6,zb-.13,xa+.03,10.1,-.09,mat.frame,g,false); mul(g,4.6,3.6,4.66,10.1);
+    [6.07,7.51,8.95,10.4,11.82].forEach(x=>mul(g,x-.03,3.6,x+.03,10.1,zb-.1)); reg(g,11,{mode:'rise',delay:.05,dur:.5}); }
+  { const g=group(sideG); pane(g,.05,3.6,SEU,10.1); bx(.05,6.55,-.16,SEU,7.15,-.1,mat.slabEdge,g,false); mul(g,.05,3.6,SEU,3.66); mul(g,.05,10.04,SEU,10.1);
     [.49,1.27,14.05].forEach(x=>mul(g,x-.03,3.6,x+.03,10.1)); reg(g,11,{mode:'rise',delay:.12,dur:.5}); }
-  { const g=group(); arcCyl(RC-.12,3.6,10.1,mat.glass,g,36); arcCyl(RC-.1,6.55,7.15,mat.slabEdge,g,36); arcCyl(RC-.1,3.6,3.66,mat.frame,g,36); arcCyl(RC-.1,10.04,10.1,mat.frame,g,36);
-    [1,2].forEach(k=>{ const a=-PI/2+k*PI/6, r=RC-.1; const m=bx(-.03,3.6,-.035,.03,10.1,.035,mat.frame,g,false); m.position.set(CX+r*Math.sin(a),6.85,CZ+r*Math.cos(a)); m.rotation.y=a; });
+  // гнутые витражи обоих углов фасада 1: R CR по конструктивной линии
+  { const g=group(), r=CR-.1;
+    arcCyl(CR-.12,3.6,10.1,mat.glass,g,36); arcCyl(r,6.55,7.15,mat.slabEdge,g,36); arcCyl(r,3.6,3.66,mat.frame,g,36); arcCyl(r,10.04,10.1,mat.frame,g,36);
+    arcAt(QX,QZ,CR-.12,3.6,10.1,0,PI/2,mat.glass,g,36); arcAt(QX,QZ,r,3.6,3.66,0,PI/2,mat.frame,g,36); arcAt(QX,QZ,r,10.04,10.1,0,PI/2,mat.frame,g,36);
+    [1,2].forEach(k=>[[PX,PZ,-PI/2+k*PI/6],[QX,QZ,k*PI/6]].forEach(([cx,cz,a])=>{ const m=bx(-.03,3.6,-.035,.03,10.1,.035,mat.frame,g,false); m.position.set(cx+r*Math.sin(a),6.85,cz+r*Math.cos(a)); m.rotation.y=a; }));
     reg(g,11,{mode:'rise',delay:0,dur:.5}); }
 
   /* ---- 12 · отделка и благоустройство ---- */
   { const pv=(x0,z0,x1,z1,d)=>{ const g=new THREE.PlaneGeometry(x1-x0,z1-z0); g.rotateX(-PI/2); g.translate((x1-x0)/2,0,0);
       const o=new THREE.Mesh(g,paveMat((x1-x0)/1.2,(z1-z0)/1.2)); o.position.set(x0,-.585,(z0+z1)/2); o.receiveShadow=true; ROOT.add(o); grounds.push(o); reg(o,12,{mode:'grow',axis:'x',delay:d,dur:.3}); };
-    pv(-9,0,24,5.6,0); pv(-9,-18,-.35,0,.04); pv(W,-1.2,24,0,.06);
+    pv(-9,0,24,5.6,0); pv(-9,-18,-.35,0,.04); pv(W,-1.2,24,0,.06); pv(-.35,-RC,W,0,.05);
     const rp=pivotBox(-9,-.6,5.6,24,-.575,6.4,mat.redPave,'x'); grounds.push(rp); reg(rp,12,{mode:'grow',axis:'x',delay:.08,dur:.3});
-    const plat=group(); bx(0,-.6,-RC,W,0,2.0,stoneMat(14,1.2),plat); bx(-.35,-.6,-D,RC,0,-RC,stoneMat(15,1.2),plat);
-    surf(0,-RC,W,2.0,.002,paveMat(11,2.7),plat); surf(-.35,-D,RC,-RC,.002,paveMat(1.4,12.5),plat);
-    [3.0,6.0].forEach(c2=>{ for(let i=0;i<3;i++) bx(c2-1.0,-.6,2.0+i*.32,c2+1.0,-.15*(i+1),2.0+(i+1)*.32,mat.stoneLight,plat); });
-    for(let i=0;i<3;i++) bx(-.35-(i+1)*.32,-.6,-.9,-.35-i*.32,-.15*(i+1),1.4,mat.stoneLight,plat);
+    // вход с фасада 1 по STL: площадка ±0.000 под консолью x 1.3…7.7 до z 0, дальше 5 ступеней 200 × 183 до z 1.0; массив от −1.100
+    const plat=group(), EX1=7.7, rs=.55/3;
+    bx(RC,-1.1,-RC,EX1,0,0,stoneMat(5,1),plat); surf(RC,-RC,EX1,0,.002,paveMat(5.3,1.1),plat);
+    for(let i=1;i<=5;i++) bx(RC,-1.1,(i-1)*.2,EX1,-i*rs,i*.2,mat.stoneLight,plat);
+    bx(-.35,-.6,-D,RC,0,-RC,stoneMat(15,1.2),plat); surf(-.35,-D,RC,-RC,.002,paveMat(1.4,12.5),plat);
     for(let i=0;i<3;i++) bx(-.35-(i+1)*.32,-.6,-13.9,-.35-i*.32,-.15*(i+1),-12.3,mat.stoneLight,plat);
     reg(plat,12,{mode:'rise',delay:.1,dur:.25}); }
   { const cafe=group(); bx(7.9,-.6,2.0,13.7,-.5,5.5,mat.deckWood,cafe);
@@ -997,8 +1033,9 @@ function build(){
     [[-6,2],[-5.2,3.9],[-2.3,1.8],[15.2,1.8],[17.2,4.3],[19.4,2.0],[-7.6,7.4],[-6.4,10.8],[22.6,10.6],[23.6,7.2]].forEach(([x,z])=>reg(bush(x,z),12,{mode:'grow',delay:.45+(k++)*.02,dur:.3})); }
   // цвета отделки, стеклянные перегородки офиса, тёплый пол −1, мебель
   { const F=[[CEIL[0],RC+.3,-RC-.3,0x3f4447,0x2c3033,0x2f8a86],[CEIL[1],RC+.15,-RC-.15,0xc9b29a,0x3a3431,0x9a5a44],[CEIL[2],.3,-.3,0xe6ded2,0x7f8446,0x8fa066],[CEIL[3],.3,-.3,0xd3cbc0,0x9a948c,0xc98a6e]];
-    F.forEach(([[y0,y1],x0,z1,f,c2,a],i)=>{ const g=group(); bx(x0,y0+.005,-D+.35,W-.35,y0+.02,z1,fin(f),g,false); bx(x0,y1-.02,-D+.35,W-.35,y1,z1,fin(c2),g,false);
-      xr(bx(W-.36,y0,-D+.6,W-.33,y1,z1-.2,fin(a),g,false),.2); reg(g,12,{mode:'rise',delay:.3+i*.08,dur:.25}); });
+    F.forEach(([[y0,y1],x0,z1,f,c2,a],i)=>{ const g=group(), up=i>1;   // 2–3 этажи: за уступом фасада 1 витраж глубже на SB
+      (up?[[x0,4.9,z1],[4.9,W-.35,z1-SB]]:[[x0,W-.35,z1]]).forEach(([xa,xb,zb])=>{ bx(xa,y0+.005,-D+.35,xb,y0+.02,zb,fin(f),g,false); bx(xa,y1-.02,-D+.35,xb,y1,zb,fin(c2),g,false); });
+      xr(bx(W-.36,y0,-D+.6,W-.33,y1,up?QZ:z1-.2,fin(a),g,false),.2); reg(g,12,{mode:'rise',delay:.3+i*.08,dur:.25}); });
     const og=group(); PART.oGlass.forEach(([a,b,c2,d])=>seg(a,b,c2,d,L2,RT-.35,.04,mat.glassIn,og)); reg(og,12,{mode:'rise',delay:.5,dur:.25});
     const hp=group(); [[9.07,6.9,12.43,8.42],[10.82,8.42,12.43,13.25]].forEach(([a,b,c2,d])=>bx(a+.08,LB+.03,zr(b)-.08,c2-.08,LB+.05,zr(d)+.08,mat.heat,hp,false)); reg(hp,12,{mode:'rise',delay:.2,dur:.2});
     const off=group(); [5.2,7.0].forEach(x=>{ bx(x-.7,L2+.72,zr(14.0)-.35,x+.7,L2+.76,zr(14.0)+.35,mat.white,off,false); bx(x-.25,L2,zr(14.0)-.9,x+.25,L2+.5,zr(14.0)-.5,mat.orange,off,false); });
