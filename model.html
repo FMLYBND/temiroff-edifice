@@ -53,6 +53,7 @@
   .tog{border:1px solid var(--line);background:var(--paper-a);border-radius:3px;display:flex;align-items:center;gap:6px}
   .tog::before{content:"";width:9px;height:9px;border:1.5px solid var(--ink2);border-radius:2px}
   .tog[aria-pressed="true"]::before{background:var(--oxide);border-color:var(--oxide)}
+  .tog[hidden]{display:none}
   button:focus-visible,input:focus-visible{outline:2px solid var(--oxide);outline-offset:2px}
 
   .card{position:absolute;right:16px;top:calc(104px + env(safe-area-inset-top,0px));width:344px;box-sizing:border-box;max-height:calc(100% - 104px - 160px);overflow:auto;
@@ -197,6 +198,8 @@
     <button type="button" class="tog" id="t-elev" aria-pressed="true">Отметки</button>
     <button type="button" class="tog" id="t-ctx" aria-pressed="true">Соседи</button>
     <button type="button" class="tog" id="t-apps" aria-pressed="false" title="Заявки QTSK по офису в Навои, реестр на 04.10">Заявки</button>
+    <button type="button" class="tog" id="t-stl" aria-pressed="false" title="Фактическая модель из STL (bc_navoi.stl)">STL</button>
+    <button type="button" class="tog" id="t-fit" aria-pressed="false" title="Сверка: ручная модель + STL полупрозрачным поверх" hidden disabled>Сверка</button>
   </nav>
 
   <aside class="card" id="card" aria-live="polite"></aside>
@@ -219,6 +222,7 @@
 <script src="assets/vendor/three/three.min.js"></script>
 <script src="assets/vendor/three/examples/js/controls/OrbitControls.js"></script>
 <script src="assets/vendor/three/examples/js/environments/RoomEnvironment.js"></script>
+<script src="assets/model-stl.js"></script>
 <script>
 (function(){
 if(!window.THREE || !THREE.OrbitControls){
@@ -1023,6 +1027,7 @@ function build(){
 
   ROOT=scene; lastApplied=-1;
   setVariant(P.variant); if(xray) setXray(true);
+  applyStl();
 }
 
 /* ============ КАМЕРА ============ */
@@ -1202,11 +1207,42 @@ function setXray(on){ xray=on; tX.setAttribute('aria-pressed',String(xray));
     (Array.isArray(m.material)?m.material:[m.material]).forEach(x=>{ if(seen.has(x)) return; seen.add(x); setOp(x,xray,op); });
     if(m.userData.shell) m.castShadow=!xray; });
   setGroundGhost(xray || cut==='-1');
+  applyStl();
 }
 tX.addEventListener('click',()=>setXray(!xray));
 const tApps=document.getElementById('t-apps');
 function setApps(on){ appsOn=on; tApps.setAttribute('aria-pressed',String(on)); shownK=-1; cardEl.scrollTop=0; }
 tApps.addEventListener('click',()=>setApps(!appsOn));
+
+/* ============ STL: фактическая модель (assets/model-stl.js) ============ */
+// своя группа в scene, вне MODEL/reg(): build() её не трогает и не дублирует.
+// Срез «Этаж» идёт через renderer.clippingPlanes — STL режется им сам, отдельные плоскости не нужны.
+const STL=window.EDIFICE_STL, tStl=document.getElementById('t-stl'), tFit=document.getElementById('t-fit');
+let stlOn=false, fitOn=false, stlG=null, stlMat=null, stlLine=null;
+if(STL && STL.pos && STL.idx) try{
+  const b64=(s,T)=>{ const bin=atob(s), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return new T(u.buffer); };
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(b64(STL.pos,Float32Array),3)); g.setIndex(new THREE.BufferAttribute(b64(STL.idx,Uint16Array),1));
+  const flat=g.toNonIndexed(); flat.computeVertexNormals();
+  stlMat=new THREE.MeshStandardMaterial({color:0xcfd0cc,roughness:.85,metalness:0,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});
+  stlLine=new THREE.LineBasicMaterial({color:0x2a2f33});
+  const m=new THREE.Mesh(flat,stlMat); m.castShadow=true; m.receiveShadow=true;
+  stlG=new THREE.Group(); stlG.name='stl'; stlG.visible=false; stlG.add(m,new THREE.LineSegments(new THREE.EdgesGeometry(g,20),stlLine)); scene.add(stlG);
+}catch(e){ console.warn('STL не загружен:',e); stlG=null; }
+if(!stlG) tStl.hidden=true;
+// ручная геометрия прячется слоем 1 (камера видит только 0); линейка отметок и мощение остаются
+function applyStl(){
+  const on=!!stlG && stlOn, fit=on && fitOn;
+  tStl.setAttribute('aria-pressed',String(on)); tFit.hidden=tFit.disabled=!on; tFit.setAttribute('aria-pressed',String(fit));
+  if(MODEL){ const L=on && !fit?1:0; (function walk(o){ if(o.name==='ruler' || grounds.includes(o)) return; o.layers.set(L); o.children.forEach(walk); })(MODEL); }
+  if(!stlG) return;
+  stlG.visible=on;
+  const op=fit?.35:xray?.25:1;
+  stlMat.color.setHex(fit?0xe8913f:0xcfd0cc); stlMat.transparent=op<1; stlMat.opacity=op; stlMat.depthWrite=op===1; stlMat.needsUpdate=true;
+  stlLine.color.setHex(fit?0x9a4a12:0x2a2f33);
+  stlG.children[0].castShadow=op===1;
+}
+tStl.addEventListener('click',()=>{ stlOn=!stlOn; if(!stlOn) fitOn=false; applyStl(); layoutCard(); });
+tFit.addEventListener('click',()=>{ fitOn=!fitOn; applyStl(); });
 addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'){ if(e.code!=='Space'||e.target.tagName==='SELECT') return; }
   if(e.code==='Space'){ e.preventDefault(); playBtn.click(); }
