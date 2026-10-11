@@ -359,10 +359,22 @@
       html += '<a href="#" id="publish">Опубликовать</a>';
     }
     el.innerHTML = html;
+    // На телефоне (≤640px) шапка прячет #who, а тот же блок показывается в меню-бургере.
+    var nav = $("#nav");
+    if (nav) {
+      var nw = document.createElement("div");
+      nw.className = "nav-who";
+      nw.innerHTML = html.replace(' id="logout"', ' data-logout').replace(' id="publish"', ' data-publish-overlay');
+      nav.appendChild(nw);
+    }
     var a = $("#logout", el);
     if (a) a.addEventListener("click", function (e) { e.preventDefault(); AUTH.logout(); });
     var p = $("#publish", el);
     if (p) p.addEventListener("click", function (e) { e.preventDefault(); publishOverlay(); });
+    if (nav) {
+      $all("[data-logout]", nav).forEach(function (x) { x.addEventListener("click", function (e) { e.preventDefault(); AUTH.logout(); }); });
+      $all("[data-publish-overlay]", nav).forEach(function (x) { x.addEventListener("click", function (e) { e.preventDefault(); publishOverlay(); }); });
+    }
   }
 
   function wireNav() {

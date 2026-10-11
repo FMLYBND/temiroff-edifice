@@ -132,3 +132,17 @@ header.top nav::-webkit-scrollbar{display:none;height:0;}
   .m-flag{max-width:190px;}
 }
 @media (prefers-reduced-motion:reduce){.m-elev,.m-fl,.m-flag{transition:none;}}
+
+/* ===== Мобильная шапка (≤640px): подпись под названием, «Просмотр / Войти» — в меню ===== */
+.nav-who{display:none;}
+@media (max-width:640px){
+header.top{gap:10px;}
+header.top .brand{display:grid;grid-template-columns:28px auto;column-gap:10px;align-items:center;min-width:0;font-size:20px;line-height:1.1;}
+header.top .brand-mark{grid-row:span 2;}
+header.top .brand small{margin-top:2px;}
+header.top .burger{flex:0 0 44px;}
+header.top>.who{display:none;}
+header.top nav .nav-who{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 8px 4px;font-size:14px;color:var(--muted);white-space:normal;}
+header.top nav .nav-who strong{color:var(--fg);font-weight:600;}
+header.top nav .nav-who a{padding:8px 12px;font-size:14px;color:var(--fg);border:1px solid var(--line);border-radius:8px;}
+}
